@@ -5,30 +5,43 @@
 #       server name was adapted to match the new sql server name in env variables for the APIs 
 #       also the name user-data was updated because it was user.data which can't be a server name in kubernetes
 #       Deleted all networks and all uncessairy information for clean build for kubernetes
-#
+#       All Startup.cs files in Applicants.Api, Identity.Api,Jobs.Api were updated to harvest env variables for future uses
+#       for Web:  since it contains a .json document to service containers and can't be replaced to variables 
+#                 the docker file now contains a harvests the variables and implements them into the json file on boot 
+#                 using RUN apt-get update && apt-get install -y jq and also RUN jq --arg env
+#       NOTE: All these changes were made to adapty to kubernetes naming syntax and minikube name spaces for network
+#                                                                                                         Alaa HAJRI
 version: '3.9'
 services:
   user-data: ### user.data  #1
+    container_name: user-data
     image: redis  
     ports:
       - "6379:6379"               #Exposition du port 6379.
-    container_name: user-data
+    restart: on-failure
 
   rabbitmq: ### rabbitmq #2
+    container_name: rabbitmq
     image: rabbitmq:3-management
     ports:
       - "15672:15672"             # il expose les ports 15672 et 5672.
       - "5672:5672"             # On peux fermer le port 5672
-    container_name: rabbitmq
+    healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "status"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+    restart: on-failure
 
   mssql-linux: ### sql.data #3
+    container_name: mssql-linux
     image: mssql-linux
     build:
       context: ./Database
       dockerfile: Dockerfile
     ports:
       - "5433:1433"
-    container_name: mssql-linux
+    restart: on-failure
 
   service-api-applicants: ### applicants.api #4
     container_name: service-applicants-api
@@ -42,6 +55,10 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
+    depends_on:
+      rabbitmq:
+          condition: service_healthy
+    restart: on-failure
 
   service-api-jobs: ### jobs.api #5
     container_name: service-api-jobs
@@ -55,18 +72,28 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
- 
+    depends_on:
+      rabbitmq:
+          condition: service_healthy
+    restart: on-failure
+
   service-api-identity: ### identity.api  #6
     container_name: service-api-identity
     image: service-api-identity
-    environment:
-      - RedisHost=user-data:6379
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
     build:
       context: .
       dockerfile: Dockerfile.identityapi
+    environment:
+      - RedisHost=user-data:6379
+      - HostRabbitmq=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    depends_on:
+      rabbitmq:
+          condition: service_healthy
+    restart: on-failure
+
 
   web: ### web #7
     image: web 
@@ -80,3 +107,8 @@ services:
     ports: 
     - "80:80"
     container_name: web
+    depends_on:
+      - service-api-identity
+      - service-api-jobs
+      - service-api-applicants
+    restart: on-failure
