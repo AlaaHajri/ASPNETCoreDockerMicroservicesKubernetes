@@ -1,0 +1,152 @@
+version: '3.9'
+networks:
+  web:
+    name: web.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16 
+          gateway: 172.21.0.1
+  redis: 
+    name: user.data.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1
+  rabbitmq: 
+    name: rabbitmq.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16 
+          gateway: 172.19.0.1 
+  database: 
+    name: database.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 
+          gateway: 172.20.0.1
+
+services:
+  user.data: ### user.data  #1
+    image: redis  
+    ports:
+      - "6379:6379"               #Exposition du port 6379.
+    container_name: user.data
+    restart: on-failure
+    networks:
+    - redis
+  rabbitmq: ### rabbitmq #2
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"             # il expose les ports 15672 et 5672.
+      # - "5672:5672"             # On peux fermer le port 5672
+    container_name: rabbitmq
+    restart: on-failure
+    healthcheck:
+        test: ["CMD", "rabbitmq-diagnostics", "status"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+    networks:
+      - rabbitmq
+
+  sql.data: ### sql.data #3
+    image: mssql-linux
+    build:
+      context: ./Database
+      dockerfile: Dockerfile
+    ports:
+      - "5433:1433"
+    container_name: mssql-linux
+    restart: on-failure
+    networks:
+      - database
+      - rabbitmq
+      - redis
+
+  applicants.api: ### applicants.api #4
+    image: applicants.api
+    environment:
+      - ConnectionString=Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;    
+      - HostRabbitmq=rabbitmq
+    build:
+      context: .
+      dockerfile: Dockerfile.applicantsapi
+    # ports:  #securité 
+    # - "8081:80" #Expose son port 80 sur le 8081 de l'host.
+    volumes: 
+      - ./services/applicants.api/bin/pub/:/app/pub
+    container_name: applicants.api
+    depends_on:
+      rabbitmq:
+          condition: service_healthy
+    restart: on-failure
+    networks:
+      - database
+      - rabbitmq
+      - redis
+
+  jobs.api: ### jobs.api #5
+    image: jobs.api
+    environment:
+      - ConnectionString=Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;    
+      - HostRabbitmq=rabbitmq
+    build:
+      context: .
+      dockerfile: Dockerfile.jobsapi
+    # ports: 
+    # - "8083:80" # Expose son port 80 sur le 8083 de l'host.
+    container_name: jobs.api
+    depends_on:
+      rabbitmq:
+          condition: service_healthy
+    restart: on-failure
+    networks:
+      - database
+      - rabbitmq
+      - redis
+  
+  identity.api: ### identity.api  #6
+    image: identity.api
+    environment:
+      - RedisHost=user.data:6379
+      - HostRabbitmq=rabbitmq
+    build:
+      context: .
+      dockerfile: Dockerfile.identityapi
+    # ports: 
+    # - "8084:80" #Expose son port 80 sur le 8084 de l'host.
+    container_name: identity.api
+    depends_on:
+      rabbitmq:
+          condition: service_healthy
+    restart: on-failure    
+    networks:
+      - database
+      - rabbitmq
+      - redis
+
+  web: ### web #7
+    image: web 
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment: # pour m'aider a voir le log en cas de probléme
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports: 
+    # - "8080:80" # Expose son port 80 sur le 80 (ou 8080) de l'host.
+    - "80:80"
+    container_name: web
+    depends_on:
+      - applicants.api
+      - identity.api
+      - jobs.api
+    restart: on-failure
+    links: #Resolution DNS trouvé dans le fichier JSON dans Web\appsettings.json pour établir la connection
+      - "identity.api:service-api-identity"
+      - "jobs.api:service-api-jobs"
+    networks:
+      - web    

@@ -1,0 +1,82 @@
+#
+#       This version is only kept for exporting images quicker for Kubernetes
+#       The detailed docker-compose is kept in docker-compose.backup
+#       service names are changed with "-" instead of point "." due to syntax errors in kubernetes 
+#       server name was adapted to match the new sql server name in env variables for the APIs 
+#       also the name user-data was updated because it was user.data which can't be a server name in kubernetes
+#       Deleted all networks and all uncessairy information for clean build for kubernetes
+#
+version: '3.9'
+services:
+  user-data: ### user.data  #1
+    image: redis  
+    ports:
+      - "6379:6379"               #Exposition du port 6379.
+    container_name: user-data
+
+  rabbitmq: ### rabbitmq #2
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"             # il expose les ports 15672 et 5672.
+      - "5672:5672"             # On peux fermer le port 5672
+    container_name: rabbitmq
+
+  mssql-linux: ### sql.data #3
+    image: mssql-linux
+    build:
+      context: ./Database
+      dockerfile: Dockerfile
+    ports:
+      - "5433:1433"
+    container_name: mssql-linux
+
+  service-api-applicants: ### applicants.api #4
+    container_name: service-applicants-api
+    image: service-applicants-api
+    build:
+      context: .
+      dockerfile: Dockerfile.applicantsapi
+    environment:
+      - ConnectionString=Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.applicants
+      - HostRabbitmq=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+
+  service-api-jobs: ### jobs.api #5
+    container_name: service-api-jobs
+    image: service-api-jobs
+    build:
+      context: .
+      dockerfile: Dockerfile.jobsapi      
+    environment:
+      - ConnectionString=Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.jobs
+      - HostRabbitmq=rabbitmq
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+ 
+  service-api-identity: ### identity.api  #6
+    container_name: service-api-identity
+    image: service-api-identity
+    environment:
+      - RedisHost=user-data:6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    build:
+      context: .
+      dockerfile: Dockerfile.identityapi
+
+  web: ### web #7
+    image: web 
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      SERVICE_API_IDENTITY: http://service-api-identity
+      SERVICE_API_JOBS: http://service-api-jobs
+    ports: 
+    - "80:80"
+    container_name: web

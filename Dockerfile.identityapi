@@ -1,0 +1,38 @@
+# Base image
+FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-stretch-slim as base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
+
+# Build image
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
+ENV RABBITMQ_HOST $RABBITMQ_HOST
+ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
+ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
+
+WORKDIR /src
+COPY ./Services/Identity.Api /src/Services/Identity.Api
+COPY ./Foundation/Events /src/Foundation/Events
+# COPY . /src/Foundation/Events
+
+WORKDIR /src
+RUN dotnet restore /src/Services/Identity.Api/Identity.Api.csproj
+COPY . .
+WORKDIR /src/Services/Identity.Api
+RUN dotnet build "Identity.Api.csproj" -c Release -o /app/build
+
+# Publish image
+FROM build AS publish
+ENV RABBITMQ_HOST $RABBITMQ_HOST
+ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
+ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
+RUN dotnet publish "Identity.Api.csproj" -c Release -o /app/pub
+
+# Final image
+FROM base AS final
+ENV RABBITMQ_HOST $RABBITMQ_HOST
+ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
+ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
+WORKDIR /app
+COPY --from=publish /app/pub .
+ENTRYPOINT ["dotnet", "Identity.Api.dll"]

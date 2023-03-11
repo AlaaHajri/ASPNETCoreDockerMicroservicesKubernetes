@@ -1,0 +1,35 @@
+# Base image
+FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-stretch-slim as base
+WORKDIR /app 
+EXPOSE 80
+EXPOSE 443
+
+# Build image
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
+WORKDIR /src
+COPY ./Web /src/Web
+COPY ./Foundation/Http /src/Foundation/Http
+
+
+WORKDIR /src/Web
+ENV SERVICE_API_IDENTITY $SERVICE_API_IDENTITY
+ENV SERVICE_API_JOBS $SERVICE_API_JOBS
+RUN apt-get update && apt-get install -y jq
+RUN jq --arg env "$SERVICE_API_IDENTITY" '.ApiSettings.IdentityApiUrl = $env' ./appsettings.json > ./appsettings.tmp && mv ./appsettings.tmp ./appsettings.json && \
+    jq --arg env "$SERVICE_API_JOBS" '.ApiSettings.JobsApiUrl = $env' ./appsettings.json > ./appsettings.tmp && mv ./appsettings.tmp ./appsettings.json
+
+WORKDIR /src
+RUN dotnet restore /src/Web/Web.csproj
+COPY . .
+WORKDIR /src/Web
+RUN dotnet build "Web.csproj" -c Release -o /app/build
+
+# Publish image
+FROM build AS publish
+RUN dotnet publish "Web.csproj" -c Release -o /app/pub
+
+# Final image
+FROM base AS final
+WORKDIR /app/pub
+COPY --from=publish /app/pub .
+ENTRYPOINT ["dotnet", "Web.dll"]
