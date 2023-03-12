@@ -1,11 +1,12 @@
 # ASPNETCoreDockerMicroservicesKubernetes
+Welcome.
 This version is created from the preview `ASPNETCoreDockerMicroservices` project. You can find it here URL: 
 # Introduction: 
 This project is a modified version of a previous project that was designed to run on `DockerCompose`. The goal of this project is to adapt the previous project to meet `Kubernetes` standards.
 
 The Kubernetes standards require that container names cannot use the `.` character, instead `-` must be used. This issue has been resolved.
 
-The source files for the three API services and the web container contain static values for the RabbitMQ server, username, and password. To address this issue, changes have been made to the C# startup.cs file, which adds three variables that can be retrieved as environment values from DockerCompose or Kubernetes.
+The source files for the three API services and the web container contain static values for the `RabbitMQ` server, username, and password. To address this issue, changes have been made to the `C# startup.cs file`, which adds three variables that can be retrieved as environment values from DockerCompose or Kubernetes.
 
 The web container's source file contains a `JSON` file that contains static values for two `API`. To resolve this issue, `jq` has been used to modify the `JSON` file core before the `.csproj` is restored in the first build of the container.
 
@@ -16,31 +17,29 @@ The `IdentityApiUrl` and `JobsApiUrl` values in the `Web\appsettings.json` file 
 To address this issue, a workaround was implemented in the `Dockerfile.web` which installs `jq`, a command-line tool used to parse and manipulate `JSON` data. This tool was added to the `Dockerfile.web` and used to run the environment variables before running the RUN dotnet restore `/src/Web/Web.csproj` command.
 
 It is important to note that all of these changes were made to adapt to Kubernetes naming syntax and kubectl namespaces for further network development. These changes have been tested and are working, so the issue is considered solved.
+#   Credit:
+Alaa HAJRI: https://github.com/AlaaHajri
+Vincent Leclerc: https://github.com/bart120
+Mark Macneil: https://github.com/mmacneil
+RabbitMQ: https://github.com/rabbitmq
 
 # TO START THIS PROJECT RUN THESE COMMANDS:
+```sh
 minikube start --driver=docker
 minikube status
 minikube dashboard
 kubectl apply -f dep-rabbitmq.yaml -f dep-web.yaml -f dep-api.yaml -f dep-mssql.yaml -f dep-redis.yaml
 minikube service rabbitmq-service
 minikube service web-service
+```
 # TROUBLESHOOTING: 
+``` sh
 minikube cache delete
 kubectl delete -f dep-rabbitmq.yaml -f dep-web.yaml -f dep-api.yaml -f dep-mssql.yaml -f dep-redis.yaml
 minikube stop
 minikube delete
 minikube start --driver=docker
-
-
-#       server name was adapted to match the new sql server name in env variables for the APIs 
-#       also the name user-data was updated because it was user.data which can't be a server name in kubernetes
-#       Deleted all networks and all uncessairy information for clean build for kubernetes
-#       All Startup.cs files in Applicants.Api, Identity.Api,Jobs.Api were updated to harvest env variables for future uses
-#       for Web:  since it contains a .json document to service containers and can't be replaced to variables 
-#                 the docker file now contains a harvests the variables and implements them into the json file on boot 
-#                 using RUN apt-get update && apt-get install -y jq and also RUN jq --arg env
-#      
-#                                                                                                         Alaa HAJRI
+```
 # CHANGELOGS:
 ## UPDATED: Services\Applicants.Api\Startup.cs
 ```C#
