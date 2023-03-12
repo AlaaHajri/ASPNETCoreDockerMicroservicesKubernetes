@@ -1,5 +1,5 @@
 # minikube start --driver=docker
-# kubectl apply -f kubernetesdeployment.yaml
+# kubectl apply -f dep-rabbitmq.yaml -f dep-web.yaml -f dep-api.yaml -f dep-mssql.yaml -f dep-redis.yaml
 
 # kubectl delete -n default deployment second-app-deployment
 # kubectl delete -n default service backend
@@ -10,15 +10,6 @@
 # minikube service front-end
 # DNS 
 # kubectl get namespaces
-
-
-
-
-
-              
----
----
----
 
 
 

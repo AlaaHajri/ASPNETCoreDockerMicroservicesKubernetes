@@ -1,7 +1,8 @@
+--- # service-api-jobs 
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-api-jobs      #SERVICE name
+  name: service-api-jobs      
 spec:
   selector:
     app: api
@@ -10,9 +11,8 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 80
-    # nodePort: 30083
   type: NodePort
----
+--- #service-api-identity
 apiVersion: v1
 kind: Service
 metadata:
@@ -25,9 +25,8 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 80
-    # nodePort: 30084
   type: NodePort
----
+--- # service-applicants-api
 apiVersion: v1
 kind: Service
 metadata:
@@ -40,9 +39,8 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 80
-    # nodePort: 30081 
   type: NodePort
----   
+--- # api-jobs-dep  
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,9 +61,12 @@ spec:
         - name: api-jobs
           image: alaahajri/service-api-jobs:latest
           resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
             limits:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "1Gi"  
           env:
             - name: ConnectionString
               value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
@@ -74,8 +75,14 @@ spec:
             - name: RABBITMQ_USERNAME
               value: guest
             - name: RABBITMQ_PASSWORD
-              value: guest
----              
+              value: guest     
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5                    
+--- #api-identity-dep          
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -105,10 +112,19 @@ spec:
             - name: RABBITMQ_PASSWORD
               value: guest
           resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
             limits:
               cpu: "500m"
-              memory: "1Gi"
----
+              memory: "1Gi"              
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5                         
+--- # api-applicants-dep
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -129,9 +145,12 @@ spec:
         - name: api-applicants
           image: alaahajri/service-api-applicants:latest
           resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
             limits:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "1Gi"  
           env:
             - name: ConnectionString
               value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
@@ -141,5 +160,9 @@ spec:
               value: guest
             - name: RABBITMQ_PASSWORD
               value: guest
-
-
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5           

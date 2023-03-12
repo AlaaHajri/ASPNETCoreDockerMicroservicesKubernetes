@@ -1,3 +1,29 @@
+# TO START THIS PROJECT RUN THESE COMMANDS:
+minikube start --driver=docker
+minikube status
+minikube dashboard
+kubectl apply -f dep-rabbitmq.yaml -f dep-web.yaml -f dep-api.yaml -f dep-mssql.yaml -f dep-redis.yaml
+minikube service rabbitmq-service
+minikube service web-service
+# TROUBLESHOOTING: 
+minikube cache delete
+kubectl delete -f dep-rabbitmq.yaml -f dep-web.yaml -f dep-api.yaml -f dep-mssql.yaml -f dep-redis.yaml
+minikube stop
+minikube delete
+minikube start --driver=docker
+#
+#       This version is only kept for exporting images quicker for Kubernetes
+#       The detailed docker-compose is kept in docker-compose.backup
+#       service names are changed with "-" instead of point "." due to syntax errors in kubernetes 
+#       server name was adapted to match the new sql server name in env variables for the APIs 
+#       also the name user-data was updated because it was user.data which can't be a server name in kubernetes
+#       Deleted all networks and all uncessairy information for clean build for kubernetes
+#       All Startup.cs files in Applicants.Api, Identity.Api,Jobs.Api were updated to harvest env variables for future uses
+#       for Web:  since it contains a .json document to service containers and can't be replaced to variables 
+#                 the docker file now contains a harvests the variables and implements them into the json file on boot 
+#                 using RUN apt-get update && apt-get install -y jq and also RUN jq --arg env
+#       NOTE: All these changes were made to adapty to kubernetes naming syntax and minikube name spaces for network
+#                                                                                                         Alaa HAJRI
 # CHANGELOGS:
 ## UPDATED: Services\Applicants.Api\Startup.cs
 ```C#
@@ -304,23 +330,392 @@ services:
 ```
 ## UPDATED: dep-api.yaml
 ```YAML
-  
+--- # service-api-jobs 
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-jobs      
+spec:
+  selector:
+    app: api
+    container: api-jobs
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort
+--- #service-api-identity
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-identity
+spec:
+  selector:
+    app: api
+    container: api-identity
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort
+--- # service-applicants-api
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-applicants-api
+spec:
+  selector:
+    app: api
+    container: applicants-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort
+--- # api-jobs-dep  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-jobs-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      container: api-jobs
+  template:
+    metadata:
+      labels:
+        app: api
+        container: api-jobs
+    spec:
+      containers:
+        - name: api-jobs
+          image: alaahajri/service-api-jobs:latest
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"  
+          env:
+            - name: ConnectionString
+              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest     
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5                    
+--- #api-identity-dep          
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-identity-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      container: api-identity
+  template:
+    metadata:
+      labels:
+        app: api
+        container: api-identity
+    spec:
+      containers:
+        - name: api-identity
+          image: alaahajri/service-api-identity:latest
+          env:
+            - name: RedisHost
+              value: "service-redis.default:6379"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"              
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5                         
+--- # api-applicants-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-applicants-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      container: api-applicants
+  template:
+    metadata:
+      labels:
+        app: api
+        container: api-applicants
+    spec:
+      containers:
+        - name: api-applicants
+          image: alaahajri/service-api-applicants:latest
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"  
+          env:
+            - name: ConnectionString
+              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5           
 ```
 ## UPDATED: dep-mssql.yaml
 ```YAML
-  
+# mssql-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mssql-linux
+  template:
+    metadata:
+      labels:
+        app: mssql-linux
+    spec:
+      containers:
+      - name: mssql-linux
+        image: alaahajri/mssql-linux
+        ports:
+        - containerPort: 1433
+        resources:
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"            
+        volumeMounts:
+          - name: mssql-data
+            mountPath: /var/opt/mssql
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: mssql-data-claim
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mssql-data
+spec:
+  storageClassName: resizable-storage
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/mssql
+--- 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-data-claim
+spec:
+  storageClassName: resizable-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  
 ```
 ## UPDATED: dep-rabbitmq.yaml
 ```YAML
-  
+--- # rabbitmq-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+spec:
+  type: NodePort   
+  ports:  # The name field is required when a service has more than one port.
+  - port: 15672
+    targetPort: 15672
+    nodePort: 30000     # Added nodePort
+    protocol: TCP
+    name: management 
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+    nodePort: 30001     # Added nodePort
+    protocol: TCP
+  selector:
+    app: rabbitmq
+--- # rabbitmq-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: alaahajri/rabbitmq:3-management
+        ports:
+        - containerPort: 15672
+        - containerPort: 5672   
+        resources:
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+        env:
+          - name: RABBITMQ_DEFAULT_USER
+            value: guest
+          - name: RABBITMQ_DEFAULT_PASS
+            value: guest  
+        readinessProbe: # probe to know when RMQ is ready to accept traffic
+          exec:
+            # This is just an example. There is no "one true health check" but rather
+            # several rabbitmq-diagnostics commands that can be combined to form increasingly comprehensive
+            # and intrusive health checks.
+            # Learn more at https://www.rabbitmq.com/monitoring.html#health-checks.
+            #
+            # Stage 1 check:
+            command: ["rabbitmq-diagnostics", "ping"]
+          initialDelaySeconds: 20
+          periodSeconds: 60
+          timeoutSeconds: 10                        
 ```
 ## UPDATED: dep-redis.yaml
 ```YAML
-  
+# service-redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-redis
+spec:
+  selector:
+    app: redis
+  ports:
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379
+  type: NodePort
+--- # redis-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: alaahajri/redis:latest
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"   
 ```
 ## UPDATED: dep-web.yaml
 ```YAML
-  
+--- # web service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+    protocol: TCP
+  selector:
+    app: web
+--- # web-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web                   #web
+        image: alaahajri/web:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi" 
+        env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: "Development"
+          - name: SERVICE_API_IDENTITY
+            value:  http://service-api-identity.default
+          - name: SERVICE_API_JOBS
+            value: http://service-api-jobs.default  
 ```
 _______________________________________________________________
 ```C#
@@ -333,16 +728,3 @@ _______________________________________________________________
   
 ```
 
-#
-#       This version is only kept for exporting images quicker for Kubernetes
-#       The detailed docker-compose is kept in docker-compose.backup
-#       service names are changed with "-" instead of point "." due to syntax errors in kubernetes 
-#       server name was adapted to match the new sql server name in env variables for the APIs 
-#       also the name user-data was updated because it was user.data which can't be a server name in kubernetes
-#       Deleted all networks and all uncessairy information for clean build for kubernetes
-#       All Startup.cs files in Applicants.Api, Identity.Api,Jobs.Api were updated to harvest env variables for future uses
-#       for Web:  since it contains a .json document to service containers and can't be replaced to variables 
-#                 the docker file now contains a harvests the variables and implements them into the json file on boot 
-#                 using RUN apt-get update && apt-get install -y jq and also RUN jq --arg env
-#       NOTE: All these changes were made to adapty to kubernetes naming syntax and minikube name spaces for network
-#                                                                                                         Alaa HAJRI

@@ -1,18 +1,4 @@
-# SQL Data Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: mssql-service
-spec:
-  selector:
-    app: mssql-linux
-  ports:
-  - protocol: TCP
-    port: 1433
-    targetPort: 1433
-  type: NodePort
----
-# SQL Data Deployment
+# mssql-dep
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -33,6 +19,41 @@ spec:
         ports:
         - containerPort: 1433
         resources:
-          limits:
+          requests:
             cpu: "1"
             memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"            
+        volumeMounts:
+          - name: mssql-data
+            mountPath: /var/opt/mssql
+      volumes:
+        - name: mssql-data
+          persistentVolumeClaim:
+            claimName: mssql-data-claim
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mssql-data
+spec:
+  storageClassName: resizable-storage
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /mnt/data/mssql
+--- 
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mssql-data-claim
+spec:
+  storageClassName: resizable-storage
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
