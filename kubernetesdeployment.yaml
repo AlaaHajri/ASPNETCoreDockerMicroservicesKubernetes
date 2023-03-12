@@ -51,37 +51,11 @@ spec:
         env:
           - name: ASPNETCORE_ENVIRONMENT
             value: "Development"
----
-# backend service
-apiVersion: v1
-kind: Service
-metadata:
-  name: api-service
-spec:
-  type: LoadBalancer
-  selector:
-    app: api-app
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
----
-# api deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api-app
-  template:
-    metadata:
-      labels:
-        app: api-app
-    spec:
-      containers:
+          - name: SERVICE_API_IDENTITY
+            value:  http://service-api-identity.default
+          - name: SERVICE_API_JOBS
+            value: http://service-api-jobs.default
+
       - name: service-api-jobs          #applicants.api
         image:  alaahajri/service-api-jobs:latest  
         resources:
@@ -91,22 +65,32 @@ spec:
         env:
           - name: ConnectionString
             value: "Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
-          - name: HostRabbitmq
-            value: "rabbitmq"          
+          - name: RABBITMQ_HOST
+            value:  rabbitmq.default
+          - name: RABBITMQ_USERNAME
+            value:  guest
+          - name: RABBITMQ_PASSWORD
+            value:  guest      
             
-      - name:  service-api-identity     #identity.api
+      - name:  service-api-identity       #identity.api
         image: alaahajri/service-api-identity:latest
         env:
           - name: RedisHost
             value: "user-data:6379"
-          - name: HostRabbitmq
-            value: "rabbitmq"
+          # - name: HostRabbitmq
+          #   value: "rabbitmq"
+          - name: RABBITMQ_HOST
+            value:  rabbitmq.default
+          - name: RABBITMQ_USERNAME
+            value:  guest
+          - name: RABBITMQ_PASSWORD
+            value:  guest
         resources:
           limits:
             cpu: "1"
             memory: "1Gi"
 
-      - name: service-applicants-api    #applicants.api
+      - name: service-applicants-api     #applicants.api
         image: alaahajri/service-applicants-api:latest
         resources:
           limits:
@@ -115,54 +99,91 @@ spec:
         env:
           - name: ConnectionString
             value: "Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
-          - name: HostRabbitmq
-            value: "rabbitmq"                 
+          - name: RABBITMQ_HOST
+            value:  rabbitmq.default
+          - name: RABBITMQ_USERNAME
+            value:  guest
+          - name: RABBITMQ_PASSWORD
+            value:  guest      
+
+      - name: rabbitmq                   #rabbitmq
+        image: alaahajri/rabbitmq:latest
+        ports: 
+          - containerPort: 15672     
+          - containerPort: 5672            
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"                 
 ---
-apiVersion: apps/v1   # Specifies the version of the Kubernetes API to use for creating the Deployment object
-kind: Deployment   # Specifies the type of Kubernetes object to create
-metadata:   # Contains metadata about the deployment
-  name: second-app-deployment   # Specifies the name of the Deployment object
-spec:   # Specifies the specification of the deployment
-  replicas: 1   # Specifies the number of replicas (pods) to create for this deployment
-  selector:   # Specifies how the Deployment selects which pods to control
-    matchLabels:   # Specifies the labels that must match for a pod to be controlled by this Deployment
-      app: second-app
-      #  tier: backend
-  template:   # Specifies the pod template that should be used for creating new pods
-    metadata:   # Contains metadata about the pod
-      labels:   # Specifies the labels to be applied to the pod
-        app: second-app
-      # tier: backend
-    spec:   # Specifies the specification of the pod, including the container(s) it should run
-      containers:   # Specifies the container(s) that should run in the pod
+# # backend service
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: api-service
+# spec:
+#   type: LoadBalancer
+#   selector:
+#     app: api-app
+#   ports:
+#   - protocol: TCP
+#     port: 80
+#     targetPort: 8080
+# ---
+# api deployment
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: api-deployment
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: api-app
+#   template:
+#     metadata:
+#       labels:
+#         app: api-app
+#     spec:
+#       containers:
+                
+# ---
+# apiVersion: apps/v1   # Specifies the version of the Kubernetes API to use for creating the Deployment object
+# kind: Deployment   # Specifies the type of Kubernetes object to create
+# metadata:   # Contains metadata about the deployment
+#   name: second-app-deployment   # Specifies the name of the Deployment object
+# spec:   # Specifies the specification of the deployment
+#   replicas: 1   # Specifies the number of replicas (pods) to create for this deployment
+#   selector:   # Specifies how the Deployment selects which pods to control
+#     matchLabels:   # Specifies the labels that must match for a pod to be controlled by this Deployment
+#       app: second-app
+#       #  tier: backend
+#   template:   # Specifies the pod template that should be used for creating new pods
+#     metadata:   # Contains metadata about the pod
+#       labels:   # Specifies the labels to be applied to the pod
+#         app: second-app
+#       # tier: backend
+#     spec:   # Specifies the specification of the pod, including the container(s) it should run
+#       containers:   # Specifies the container(s) that should run in the pod
 
-        - name: mssql-linux              #sql.data
-          image: alaahajri/mssql-linux
-          ports:
-            - containerPort: 1433
-              hostPort: 5433
-              protocol: TCP
-          resources:
-            limits:
-              cpu: "1"
-              memory: "1Gi"
+#         - name: mssql-linux              #sql.data
+#           image: alaahajri/mssql-linux
+#           ports:
+#             - containerPort: 1433
+#               hostPort: 5433
+#               protocol: TCP
+#           resources:
+#             limits:
+#               cpu: "1"
+#               memory: "1Gi"
 
-        - name: redis            #user.data
-          image: alaahajri/redis:latest
-          ports:
-            - containerPort: 6379
-              protocol: TCP  
-          resources:
-            limits:
-              cpu: "1"
-              memory: "1Gi"
+#         - name: redis            #user.data
+#           image: alaahajri/redis:latest
+#           ports:
+#             - containerPort: 6379
+#               protocol: TCP  
+#           resources:
+#             limits:
+#               cpu: "1"
+#               memory: "1Gi"
 
-        - name: rabbitmq                #rabbitmq
-          image: alaahajri/rabbitmq:3-management
-          ports: 
-            - containerPort: 15672     
-            - containerPort: 5672            
-          resources:
-            limits:
-              cpu: "1"
-              memory: "2Gi"

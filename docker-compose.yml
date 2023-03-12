@@ -15,17 +15,17 @@ version: '3.9'
 services:
   user-data: ### user.data  #1
     container_name: user-data
-    image: redis:latest  
+    image: redis  
     ports:
-      - "6379:6379"               #Exposition du port 6379.
+      - "6379:6379"               # Exposition du port 6379.
     restart: on-failure
 
   rabbitmq: ### rabbitmq #2
     container_name: rabbitmq
-    image: rabbitmq:latest
+    image: rabbitmq
     ports:
       - "15672:15672"             # il expose les ports 15672 et 5672.
-      - "5672:5672"             # On peux fermer le port 5672
+      - "5672:5672"               # On peux fermer le port 5672
     healthcheck:
         test: ["CMD", "rabbitmq-diagnostics", "status"]
         interval: 10s
@@ -34,7 +34,7 @@ services:
     restart: on-failure
 
   mssql-linux: ### sql.data #3
-    container_name: mssql-linux:latest
+    container_name: mssql-linux
     image: mssql-linux
     build:
       context: ./Database
@@ -45,7 +45,7 @@ services:
 
   service-api-applicants: ### applicants.api #4
     container_name: service-applicants-api
-    image: service-applicants-api:latest
+    image: service-applicants-api
     build:
       context: .
       dockerfile: Dockerfile.applicantsapi
@@ -62,7 +62,7 @@ services:
 
   service-api-jobs: ### jobs.api #5
     container_name: service-api-jobs
-    image: service-api-jobs:latest
+    image: service-api-jobs
     build:
       context: .
       dockerfile: Dockerfile.jobsapi      
@@ -79,7 +79,7 @@ services:
 
   service-api-identity: ### identity.api  #6
     container_name: service-api-identity
-    image: service-api-identity:latest
+    image: service-api-identity
     build:
       context: .
       dockerfile: Dockerfile.identityapi
@@ -94,10 +94,9 @@ services:
           condition: service_healthy
     restart: on-failure
 
-
   web: ### web #7
     container_name: web
-    image: web:latest 
+    image: web
     build:
       context: .
       dockerfile: Dockerfile.web
@@ -107,7 +106,6 @@ services:
       SERVICE_API_JOBS: http://service-api-jobs
     ports: 
     - "80:80"
-
     depends_on:
       - service-api-identity
       - service-api-jobs
