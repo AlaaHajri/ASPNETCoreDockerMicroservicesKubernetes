@@ -40,7 +40,11 @@ minikube stop
 minikube delete
 minikube start --driver=docker
 ```
-# CHANGELOGS:
+![This is an image](https://i.imgur.com/Ck216Ng.png)
+![This is an image](https://i.imgur.com/GkFjdyZ.png)
+![This is an image](https://i.imgur.com/tAxvFBR.png)
+![This is an image](https://i.imgur.com/86e00Px.png)
+![This is an image](https://i.imgur.com/XL3X51X.png)
 ## UPDATED: Services\Applicants.Api\Startup.cs
 ```C#
             string rabbitmqHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST");              // ALAA added this 
