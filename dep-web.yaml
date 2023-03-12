@@ -1,0 +1,45 @@
+--- # web service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+    protocol: TCP
+  selector:
+    app: web
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web                   #web
+        image: alaahajri/web:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi" 
+        env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: "Development"
+          - name: SERVICE_API_IDENTITY
+            value:  http://service-api-identity.default
+          - name: SERVICE_API_JOBS
+            value: http://service-api-jobs.default

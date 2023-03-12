@@ -22,7 +22,7 @@ services:
 
   rabbitmq: ### rabbitmq #2
     container_name: rabbitmq
-    image: rabbitmq
+    image: rabbitmq:3-management
     ports:
       - "15672:15672"             # il expose les ports 15672 et 5672.
       - "5672:5672"               # On peux fermer le port 5672

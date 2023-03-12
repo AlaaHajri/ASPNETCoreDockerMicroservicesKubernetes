@@ -1,0 +1,149 @@
+# minikube start --driver=docker
+# kubectl apply -f kubernetesdeployment.yaml
+
+# kubectl delete -n default deployment second-app-deployment
+# kubectl delete -n default service backend
+
+# to see the dashboard: MUST BE RUNNING ALL TIME
+# minikube service web-service
+# to see the web page: MUST BE RUNNING ALL TIME
+# minikube service front-end
+# DNS 
+# kubectl get namespaces
+
+
+
+      # - name: service-api-jobs          #applicants.api
+      #   image:  alaahajri/service-api-jobs:latest  
+      #   resources:
+      #     limits:
+      #       cpu: "1"
+      #       memory: "1Gi"
+      #   env:
+      #     - name: ConnectionString
+      #       value: "Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
+      #     - name: RABBITMQ_HOST
+      #       value:  rabbitmq-dep.default
+      #     - name: RABBITMQ_USERNAME
+      #       value:  guest
+      #     - name: RABBITMQ_PASSWORD
+      #       value:  guest      
+            
+      # - name:  service-api-identity       #identity.api
+      #   image: alaahajri/service-api-identity:latest
+      #   env:
+      #     - name: RedisHost
+      #       value: "user-data.default:6379"
+      #     # - name: HostRabbitmq
+      #     #   value: "rabbitmq"
+      #     - name: RABBITMQ_HOST
+      #       value:  rabbitmq-dep.default
+      #     - name: RABBITMQ_USERNAME
+      #       value:  guest
+      #     - name: RABBITMQ_PASSWORD
+      #       value:  guest
+      #   resources:
+      #     limits:
+      #       cpu: "1"
+      #       memory: "1Gi"
+
+      # - name: service-applicants-api     #applicants.api
+      #   image: alaahajri/service-applicants-api:latest
+      #   resources:
+      #     limits:
+      #       cpu: "1"
+      #       memory: "1Gi"
+      #   env:
+      #     - name: ConnectionString
+      #       value: "Server=sql-data-dep.defalt;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
+      #     - name: RABBITMQ_HOST
+      #       value:  rabbitmq-dep.default
+      #     - name: RABBITMQ_USERNAME
+      #       value:  guest
+      #     - name: RABBITMQ_PASSWORD
+      #       value:  guest      
+---
+
+              
+---
+---
+# SQL Data Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-linux
+spec:
+  selector:
+    app: sql-data
+  ports:
+  - protocol: TCP
+    port: 1433
+    targetPort: 1433
+  type: NodePort
+---
+# User Data Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+spec:
+  selector:
+    app: user-data
+  ports:
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379
+  type: NodePort
+---
+# SQL Data Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sql-data-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sql-data
+  template:
+    metadata:
+      labels:
+        app: sql-data
+    spec:
+      containers:
+      - name: mssql-linux
+        image: alaahajri/mssql-linux
+        ports:
+        - containerPort: 1433
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+---
+# User Data Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-data-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-data
+  template:
+    metadata:
+      labels:
+        app: user-data
+    spec:
+      containers:
+      - name: redis
+        image: alaahajri/redis:latest
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi" 
+
+
+
