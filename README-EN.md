@@ -1,5 +1,4 @@
-# ASPNETCoreDockerMicroservicesKubernetes
-Welcome.
+# Welcome
 This version is created from the preview `ASPNETCoreDockerMicroservices` project. You can find it here URL: 
 # Introduction: 
 This project is a modified version of a previous project that was designed to run on `DockerCompose`. The goal of this project is to adapt the previous project to meet `Kubernetes` standards.
@@ -18,11 +17,12 @@ To address this issue, a workaround was implemented in the `Dockerfile.web` whic
 
 It is important to note that all of these changes were made to adapt to Kubernetes naming syntax and kubectl namespaces for further network development. These changes have been tested and are working, so the issue is considered solved.
 #   Credit:
-Alaa HAJRI: https://github.com/AlaaHajri
-Vincent Leclerc: https://github.com/bart120
-Mark Macneil: https://github.com/mmacneil
-RabbitMQ: https://github.com/rabbitmq
-
+| Name           | GitHub Profile                               |
+| -------------- | --------------------------------------------- |
+| Alaa HAJRI     | https://github.com/AlaaHajri                 |
+| Vincent Leclerc| https://github.com/bart120                   |
+| Mark Macneil   | https://github.com/mmacneil                  |
+| RabbitMQ       | https://github.com/rabbitmq                  |
 # TO START THIS PROJECT RUN THESE COMMANDS:
 ```sh
 minikube start --driver=docker
@@ -733,14 +733,4 @@ spec:
           - name: SERVICE_API_JOBS
             value: http://service-api-jobs.default  
 ```
-_______________________________________________________________
-```C#
-  
-```
-```Dockerfile
-  
-```
-```YAML
-  
-```
-
+______________________________________________________________
