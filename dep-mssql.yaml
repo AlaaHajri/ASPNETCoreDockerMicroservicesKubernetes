@@ -1,0 +1,38 @@
+# SQL Data Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mssql-service
+spec:
+  selector:
+    app: mssql-linux
+  ports:
+  - protocol: TCP
+    port: 1433
+    targetPort: 1433
+  type: NodePort
+---
+# SQL Data Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mssql-linux
+  template:
+    metadata:
+      labels:
+        app: mssql-linux
+    spec:
+      containers:
+      - name: mssql-linux
+        image: alaahajri/mssql-linux
+        ports:
+        - containerPort: 1433
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"

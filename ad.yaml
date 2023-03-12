@@ -1,0 +1,24 @@
+# minikube start --driver=docker
+# kubectl apply -f kubernetesdeployment.yaml
+
+# kubectl delete -n default deployment second-app-deployment
+# kubectl delete -n default service backend
+
+# to see the dashboard: MUST BE RUNNING ALL TIME
+# minikube service web-service
+# to see the web page: MUST BE RUNNING ALL TIME
+# minikube service front-end
+# DNS 
+# kubectl get namespaces
+
+
+
+
+
+              
+---
+---
+---
+
+
+

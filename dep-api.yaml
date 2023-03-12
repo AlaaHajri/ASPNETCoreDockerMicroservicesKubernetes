@@ -1,0 +1,145 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-jobs      #SERVICE name
+spec:
+  selector:
+    app: api
+    container: api-jobs
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    # nodePort: 30083
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-identity
+spec:
+  selector:
+    app: api
+    container: api-identity
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    # nodePort: 30084
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-applicants-api
+spec:
+  selector:
+    app: api
+    container: applicants-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    # nodePort: 30081 
+  type: NodePort
+---   
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-jobs-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      container: api-jobs
+  template:
+    metadata:
+      labels:
+        app: api
+        container: api-jobs
+    spec:
+      containers:
+        - name: api-jobs
+          image: alaahajri/service-api-jobs:latest
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          env:
+            - name: ConnectionString
+              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest
+---              
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-identity-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      container: api-identity
+  template:
+    metadata:
+      labels:
+        app: api
+        container: api-identity
+    spec:
+      containers:
+        - name: api-identity
+          image: alaahajri/service-api-identity:latest
+          env:
+            - name: RedisHost
+              value: "service-redis.default:6379"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-applicants-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+      container: api-applicants
+  template:
+    metadata:
+      labels:
+        app: api
+        container: api-applicants
+    spec:
+      containers:
+        - name: api-applicants
+          image: alaahajri/service-api-applicants:latest
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          env:
+            - name: ConnectionString
+              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest
+
+

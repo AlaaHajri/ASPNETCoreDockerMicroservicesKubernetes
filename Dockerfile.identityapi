@@ -13,7 +13,6 @@ ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
 WORKDIR /src
 COPY ./Services/Identity.Api /src/Services/Identity.Api
 COPY ./Foundation/Events /src/Foundation/Events
-# COPY . /src/Foundation/Events
 
 WORKDIR /src
 RUN dotnet restore /src/Services/Identity.Api/Identity.Api.csproj

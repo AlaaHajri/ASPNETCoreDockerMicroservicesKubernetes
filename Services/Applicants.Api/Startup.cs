@@ -28,11 +28,12 @@ namespace Applicants.Api
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            services.AddScoped<IApplicantRepository>(c => new ApplicantRepository(Configuration["ConnectionString"]));
-
             string rabbitmqHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST");              // ALAA added this 
             string rabbitmqUsername = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME");         // ALAA added this 
             string rabbitmqPassword = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD");          // ALAA added this 
+
+            services.AddScoped<IApplicantRepository>(c => new ApplicantRepository(Configuration["ConnectionString"]));
+            //"Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.applicants"
 
             var builder = new ContainerBuilder();
 
@@ -43,15 +44,17 @@ namespace Applicants.Api
                 {
                     var busControl = Bus.Factory.CreateUsingRabbitMq(cfg =>
                     {
-                        var host = cfg.Host(new Uri($"rabbitmq://{rabbitmqHost}/"), h =>    // ALAA added this 
+                         var host = cfg.Host(new Uri($"rabbitmq://{rabbitmqHost}/"), h =>    // ALAA added this 
                         {
                             h.Username(rabbitmqUsername); // ALAA added this 
                             h.Password(rabbitmqPassword);   // ALAA added this 
                         });
 
+                        // https://stackoverflow.com/questions/39573721/disable-round-robin-pattern-and-use-fanout-on-masstransit
                         cfg.ReceiveEndpoint(host, "dotnetgigs" + Guid.NewGuid().ToString(), e =>
                         {
                             e.LoadFrom(context);
+                            //e.Consumer<ApplicantAppliedConsumer>();
                         });
                     });
 
@@ -64,9 +67,8 @@ namespace Applicants.Api
             builder.Populate(services);
             ApplicationContainer = builder.Build();
 
-            return new AutofacServiceProvider(ApplicationContainer);
+            return new AutofacServiceProvider(ApplicationContainer); 
         }
-
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IApplicationLifetime lifetime)

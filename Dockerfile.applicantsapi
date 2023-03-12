@@ -4,20 +4,18 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-
 # Build image
 FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
 ENV RABBITMQ_HOST $RABBITMQ_HOST
 ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
 ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
+
 WORKDIR /src
 COPY ./Services/Applicants.Api /src/Services/Applicants.Api
 COPY ./Foundation/Events /src/Foundation/Events
-# COPY ../../Foundation/Events /src/Foundation/Events
 
 WORKDIR /src
 RUN dotnet restore /src/Services/Applicants.Api/applicants.api.csproj
-# ./src/Services/Applicants.Api/applicants.api.csproj
 COPY . .
 WORKDIR /src/Services/Applicants.Api
 RUN dotnet build "applicants.api.csproj" -c Release -o /app/build
