@@ -248,13 +248,71 @@ ENTRYPOINT ["dotnet", "Web.dll"]
 ## UPDATED: docker-compose.yml
 ```YAML
 version: '3.9'
+networks:
+  web:
+    name: web.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16 
+          gateway: 172.21.0.1
+  redis: 
+    name: user.data.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1
+  rabbitmq: 
+    name: rabbitmq.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16 
+          gateway: 172.19.0.1 
+  database: 
+    name: database.networks
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 
+          gateway: 172.20.0.1
+
+volumes:
+  mssql-linux-volume:
+    driver: local
+  user-data-volume:
+    driver: local
+  rabbitmq-volume:
+    driver: local  
+
 services:
+  mssql-linux: ### sql.data #3
+    container_name: mssql-linux
+    image: mssql-linux
+    build:
+      context: ./Database
+      dockerfile: Dockerfile
+    ports:
+      - "5433:1433"
+    restart: on-failure
+    networks:
+      - database
+      - rabbitmq
+      - redis
+    volumes:
+      - mssql-linux-volume:/var/opt/mssql/data
+
   user-data: ### user.data  #1
     container_name: user-data
     image: redis  
     ports:
       - "6379:6379"               # Exposition du port 6379.
     restart: on-failure
+    networks:
+      - redis
+    volumes:
+      - user-data-volume:/data
 
   rabbitmq: ### rabbitmq #2
     container_name: rabbitmq
@@ -268,16 +326,11 @@ services:
         timeout: 5s
         retries: 3
     restart: on-failure
-
-  mssql-linux: ### sql.data #3
-    container_name: mssql-linux
-    image: mssql-linux
-    build:
-      context: ./Database
-      dockerfile: Dockerfile
-    ports:
-      - "5433:1433"
-    restart: on-failure
+    networks:
+      - rabbitmq
+    volumes:
+      - rabbitmq-volume:/_data
+      - rabbitmq-volume:/var/lib/rabbitmq
 
   service-api-applicants: ### applicants.api #4
     container_name: service-api-applicants
@@ -295,6 +348,9 @@ services:
       rabbitmq:
           condition: service_healthy
     restart: on-failure
+    networks:
+      - rabbitmq
+      - web  
 
   service-api-jobs: ### jobs.api #5
     container_name: service-api-jobs
@@ -312,6 +368,9 @@ services:
       rabbitmq:
           condition: service_healthy
     restart: on-failure
+    networks:
+      - rabbitmq
+      - web  
 
   service-api-identity: ### identity.api  #6
     container_name: service-api-identity
@@ -329,7 +388,11 @@ services:
       rabbitmq:
           condition: service_healthy
     restart: on-failure
-
+    networks:
+      - rabbitmq
+      - redis
+      - web   
+          
   web: ### web #7
     container_name: web
     image: web
@@ -341,12 +404,14 @@ services:
       SERVICE_API_IDENTITY: http://service-api-identity
       SERVICE_API_JOBS: http://service-api-jobs
     ports: 
-    - "80:80"
+      - "80:80"
     depends_on:
       - service-api-identity
       - service-api-jobs
       - service-api-applicants
-    restart: on-failure  
+    restart: on-failure
+    networks:
+      - web      
 ```
 ## UPDATED: dep-api.yaml
 ```YAML
