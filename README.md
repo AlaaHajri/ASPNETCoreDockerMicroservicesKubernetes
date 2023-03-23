@@ -35,7 +35,7 @@ minikube service web-service
 # TROUBLESHOOTING: 
 ``` sh
 minikube cache delete
-kubectl delete -f dep-rabbitmq.yaml -f dep-web.yaml -f dep-api.yaml -f dep-mssql.yaml -f dep-redis.yaml
+kubectl delete -f dep-web.yaml -f dep-redis.yaml -f dep-rabbitmq.yaml -f dep-mssql.yaml -f dep-api-jobs.yaml -f dep-api-identity.yaml -f dep-api-applicants.yaml -f dep-ingress.yml 
 minikube stop
 minikube delete
 minikube start --driver=docker

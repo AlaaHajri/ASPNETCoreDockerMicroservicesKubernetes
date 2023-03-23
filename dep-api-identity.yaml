@@ -31,7 +31,7 @@ spec:
           image: alaahajri/service-api-identity:latest
           env:
             - name: RedisHost
-              value: "service-redis.default:6379"
+              value: "service-user-data:6379"
             - name: RABBITMQ_HOST
               value: rabbitmq-service.default
             - name: RABBITMQ_USERNAME

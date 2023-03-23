@@ -4,16 +4,16 @@ kind: Service
 metadata:
   name: rabbitmq-service
 spec:
-  type: NodePort   
+  type: ClusterIP   
   ports:  # The name field is required when a service has more than one port.
   - port: 15672
     targetPort: 15672
-    nodePort: 30000     # Added nodePort
+    # nodePort: 30000    
     protocol: TCP
     name: management 
   - port: 5672
     targetPort: 5672
-    nodePort: 30001     # Added nodePort
+    # nodePort: 30001    
     protocol: TCP
     name: amqp
   selector:
@@ -51,15 +51,15 @@ spec:
             value: guest
           - name: RABBITMQ_DEFAULT_PASS
             value: guest  
-        readinessProbe: # probe to know when RMQ is ready to accept traffic
-          exec:
-            # This is just an example. There is no "one true health check" but rather
-            # several rabbitmq-diagnostics commands that can be combined to form increasingly comprehensive
-            # and intrusive health checks.
-            # Learn more at https://www.rabbitmq.com/monitoring.html#health-checks.
-            #
-            # Stage 1 check:
-            command: ["rabbitmq-diagnostics", "ping"]
-          initialDelaySeconds: 20
-          periodSeconds: 60
-          timeoutSeconds: 10                      
+        # readinessProbe: # probe to know when RMQ is ready to accept traffic
+        #   exec:
+        #     # This is just an example. There is no "one true health check" but rather
+        #     # several rabbitmq-diagnostics commands that can be combined to form increasingly comprehensive
+        #     # and intrusive health checks.
+        #     # Learn more at https://www.rabbitmq.com/monitoring.html#health-checks.
+        #     #
+        #     # Stage 1 check:
+        #     command: ["rabbitmq-diagnostics", "ping"]
+        #   initialDelaySeconds: 20
+        #   periodSeconds: 60
+        #   timeoutSeconds: 10                      

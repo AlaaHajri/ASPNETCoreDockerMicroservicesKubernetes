@@ -38,7 +38,7 @@ spec:
               cpu: "1"  
           env:
             - name: ConnectionString
-              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
+              value: "Server=service-mssql-linux.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
             - name: RABBITMQ_HOST
               value: rabbitmq-service.default
             - name: RABBITMQ_USERNAME

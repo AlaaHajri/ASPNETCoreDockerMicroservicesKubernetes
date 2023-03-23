@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-redis
+  name: service-user-data
 spec:
   selector:
-    app: redis
+    app: user-data-pod
   ports:
   - protocol: TCP
     port: 6379
@@ -15,19 +15,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-dep
+  name: user-data-dep
+  labels:
+    app: user-data
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis-pod
+      app: user-data-pod
   template:
     metadata:
       labels:
-        app: redis-pod
+        app: user-data-pod
     spec:
-      containers:
-      - name: redis-cont
+      containers: #redis-cont
+      - name: user-data-cont
         image: alaahajri/redis:latest
         ports:
         - containerPort: 6379
