@@ -3,6 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rabbitmq-service
+  # namespace: nginx-ingress
 spec:
   type: ClusterIP   
   ports:  # The name field is required when a service has more than one port.
@@ -23,6 +24,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rabbitmq-dep
+  # namespace: nginx-ingress
 spec:
   replicas: 1
   selector:

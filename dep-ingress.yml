@@ -5,21 +5,22 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: wp-ingress
-  namespace: default
+  namespace: monitoring
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
+  ingressClassName: external-nginx
   rules:
-  - http:
+  - host: localhost
+    http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: wordpress-service
+            name: web-service
             port:
               number: 80
       - path: /rabbitmq
@@ -29,3 +30,49 @@ spec:
             name: rabbitmq-service
             port:
               number: 15672
+# --- #SERVICE
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: nginx-service
+#   # namespace: test
+# spec:
+#   selector: 
+#     app: nginx-cont
+#   ports:
+#     - protocol: TCP
+#       port: 80
+#       targetPort: 80
+#   type: LoadBalancer
+# --- #deployment
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-dep
+#   # namespace: test
+#   labels:
+#     app: nginx-pod
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-pod
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-pod
+#     spec:
+#       containers:
+#       - name: nginx-cont
+#         image: nginx:latest
+#         ports:
+#         - containerPort: 80
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Issuer 
+# metadata:
+#   name: letsencrypt-http01-prod
+#   namespace: monitoring
+# spec:
+#   acme:
+#     server:
