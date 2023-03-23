@@ -11,13 +11,13 @@ spec:
     nodePort: 30000     # Added nodePort
     protocol: TCP
     name: management 
-  - name: amqp
-    port: 5672
+  - port: 5672
     targetPort: 5672
     nodePort: 30001     # Added nodePort
     protocol: TCP
+    name: amqp
   selector:
-    app: rabbitmq
+    app: rabbitmq-pod
 --- # rabbitmq-dep
 apiVersion: apps/v1
 kind: Deployment
@@ -27,25 +27,25 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rabbitmq
+      app: rabbitmq-pod
   template:
     metadata:
       labels:
-        app: rabbitmq
+        app: rabbitmq-pod
     spec:
       containers:
-      - name: rabbitmq
+      - name: rabbitmq-cont
         image: alaahajri/rabbitmq:3-management
         ports:
         - containerPort: 15672
         - containerPort: 5672   
         resources:
           requests:
-            cpu: "1"
-            memory: "1Gi"
+            memory: "500Mi"
+            cpu: "0.5"
           limits:
+            memory: "1500Mi"
             cpu: "1"
-            memory: "2Gi"
         env:
           - name: RABBITMQ_DEFAULT_USER
             value: guest

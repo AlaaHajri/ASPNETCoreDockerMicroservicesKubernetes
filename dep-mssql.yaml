@@ -1,20 +1,33 @@
-# mssql-dep
+--- # mssql-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-mssql-linux
+spec:
+  selector:
+    app: mssql-linux-pod
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+  type: ClusterIP
+--- # mssql-dep
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mssql-dep
+  name: mssql-linux-dep
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mssql-linux
+      app: mssql-linux-pod
   template:
     metadata:
       labels:
-        app: mssql-linux
+        app: mssql-linux-pod
     spec:
       containers:
-      - name: mssql-linux
+      - name: mssql-linux-cont
         image: alaahajri/mssql-linux
         ports:
         - containerPort: 1433

@@ -1,0 +1,54 @@
+--- # service-api-jobs 
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-jobs      
+spec:
+  selector:
+    app: api-jobs-pod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+
+--- # api-jobs-dep  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-jobs-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-jobs-pod
+  template:
+    metadata:
+      labels:
+        app: api-jobs-pod
+    spec:
+      containers:
+        - name: api-jobs-cont
+          image: alaahajri/service-api-jobs:latest
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "0.5"
+            limits:
+              memory: "1500Mi"
+              cpu: "1"
+          env:
+            - name: ConnectionString
+              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.default
+            - name: RABBITMQ_USERNAME
+              value: guest
+            - name: RABBITMQ_PASSWORD
+              value: guest     
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5   
