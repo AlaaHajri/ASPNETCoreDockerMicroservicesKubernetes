@@ -3,6 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: service-api-applicants
+  namespace: web
 spec:
   selector:
     app: api-applicants-pod
@@ -16,6 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-applicants-dep
+  namespace: web
 spec:
   replicas: 1
   selector:
@@ -38,9 +40,9 @@ spec:
               cpu: "1"  
           env:
             - name: ConnectionString
-              value: "Server=service-mssql-linux.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
+              value: "Server=service-mssql-linux.web;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
             - name: RABBITMQ_HOST
-              value: rabbitmq-service.default
+              value: rabbitmq-service.web
             - name: RABBITMQ_USERNAME
               value: guest
             - name: RABBITMQ_PASSWORD

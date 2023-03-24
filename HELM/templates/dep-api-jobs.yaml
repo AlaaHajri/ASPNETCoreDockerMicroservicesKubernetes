@@ -1,18 +1,3 @@
---- # service-api-jobs 
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-jobs   
-  namespace: web   
-spec:
-  selector:
-    app: api-jobs-pod
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-  type: ClusterIP
---- # api-jobs-dep  
 apiVersion: apps/v1
 kind: Deployment
 metadata:

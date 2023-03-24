@@ -1,18 +1,3 @@
-# service-redis
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-user-data
-  namespace: web
-spec:
-  selector:
-    app: user-data-pod
-  ports:
-  - protocol: TCP
-    port: 6379
-    targetPort: 6379
-  type: ClusterIP
---- # redis-dep
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,7 +15,7 @@ spec:
       labels:
         app: user-data-pod
     spec:
-      containers: #redis-cont
+      containers: 
       - name: user-data-cont
         image: alaahajri/redis:latest
         ports:

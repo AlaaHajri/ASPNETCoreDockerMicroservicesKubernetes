@@ -1,18 +1,3 @@
---- # mssql-service
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-mssql-linux
-  namespace: web
-spec:
-  selector:
-    app: mssql-linux-pod
-  ports:
-    - protocol: TCP
-      port: 1433
-      targetPort: 1433
-  type: ClusterIP
---- # mssql-dep
 apiVersion: apps/v1
 kind: Deployment
 metadata:

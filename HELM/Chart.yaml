@@ -1,0 +1,5 @@
+apiVersion: v2
+name: helmdeployment
+description: Une charte HELM pour le deployment 
+type: application
+version: 0.3.0

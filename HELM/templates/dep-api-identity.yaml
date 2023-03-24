@@ -1,18 +1,3 @@
---- #service-api-identity
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-identity
-
-spec:
-  selector:
-    app: api-identity-pod
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-  type: ClusterIP
---- #api-identity-dep          
 apiVersion: apps/v1
 kind: Deployment
 metadata:

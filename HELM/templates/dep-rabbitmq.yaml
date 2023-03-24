@@ -1,32 +1,8 @@
---- # rabbitmq-service
-apiVersion: v1
-kind: Service
-metadata:
-  name: rabbitmq-service
-  namespace: web
-  # namespace: nginx-ingress
-spec:
-  type: ClusterIP   
-  ports:  # The name field is required when a service has more than one port.
-  - port: 15672
-    targetPort: 15672
-    # nodePort: 30000    
-    protocol: TCP
-    name: management 
-  - port: 5672
-    targetPort: 5672
-    # nodePort: 30001    
-    protocol: TCP
-    name: amqp
-  selector:
-    app: rabbitmq-pod
---- # rabbitmq-dep
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rabbitmq-dep
   namespace: web
-  # namespace: nginx-ingress
 spec:
   replicas: 1
   selector:

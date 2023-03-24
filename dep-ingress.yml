@@ -1,17 +1,18 @@
 # helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 # helm repo update
-# helm install nginx-ingress ingress-nginx/ingress-nginx --namespace myingress --set controller.replicaCount=2
+# helm install nginx-ingress ingress-nginx/ingress-nginx --namespace web --set controller.replicaCount=2
+# helm uninstall nginx-ingress --namespace web 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: wp-ingress
-  namespace: monitoring
+  namespace: web
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: external-nginx
+  ingressClassName: nginx
   rules:
   - host: localhost
     http:
@@ -23,56 +24,4 @@ spec:
             name: web-service
             port:
               number: 80
-      - path: /rabbitmq
-        pathType: Prefix
-        backend:
-          service:
-            name: rabbitmq-service
-            port:
-              number: 15672
-# --- #SERVICE
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: nginx-service
-#   # namespace: test
-# spec:
-#   selector: 
-#     app: nginx-cont
-#   ports:
-#     - protocol: TCP
-#       port: 80
-#       targetPort: 80
-#   type: LoadBalancer
-# --- #deployment
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: nginx-dep
-#   # namespace: test
-#   labels:
-#     app: nginx-pod
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: nginx-pod
-#   template:
-#     metadata:
-#       labels:
-#         app: nginx-pod
-#     spec:
-#       containers:
-#       - name: nginx-cont
-#         image: nginx:latest
-#         ports:
-#         - containerPort: 80
-# ---
-# apiVersion: cert-manager.io/v1
-# kind: Issuer 
-# metadata:
-#   name: letsencrypt-http01-prod
-#   namespace: monitoring
-# spec:
-#   acme:
-#     server:
+
