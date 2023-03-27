@@ -28,7 +28,7 @@ It is important to note that all of these changes were made to adapt to Kubernet
 minikube start --driver=docker
 minikube status
 minikube dashboard
-kubectl apply -f dep-web.yaml -f dep-redis.yaml -f dep-rabbitmq.yaml -f dep-mssql.yaml -f dep-api-jobs.yaml -f dep-api-identity.yaml -f dep-api-applicants.yaml -f dep-ingress.yml -f dep-nginx.yml
+kubectl apply -f dep-web.yaml -f dep-redis.yaml -f dep-rabbitmq.yaml -f dep-mssql.yaml -f dep-api-jobs.yaml -f dep-api-identity.yaml -f dep-api-applicants.yaml -f dep-ingress.yml
 minikube service rabbitmq-service
 minikube service web-service
 ```
