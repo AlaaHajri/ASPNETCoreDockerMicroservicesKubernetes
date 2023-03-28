@@ -1,0 +1,11 @@
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: nginx.web #my-svc.my-namespace
+spec:
+  request: $(cat server.csr | base64 | tr -d '\n')
+  signerName: localhost #example.com/serving
+  usages:
+  - digital signature
+  - key encipherment
+  - server auth

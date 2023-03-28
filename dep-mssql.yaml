@@ -39,7 +39,28 @@ spec:
             memory: "1Gi"
           limits:
             cpu: "1"
-            memory: "2Gi"            
+            memory: "2Gi"        
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/opt/mssql/data
+      volumes:
+      - name: mysql-volume
+        persistentVolumeClaim:
+          claimName: mysql-volume-claim
+      restartPolicy: Always
+--- #volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-volume-claim
+  namespace: web
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+
 #         volumeMounts:
 #           - name: mssql-data
 #             mountPath: /var/opt/mssql

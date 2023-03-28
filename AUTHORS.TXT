@@ -1,0 +1,2 @@
+PRENOM  NOM       RESPONSABILITES 
+Alaa    HAJRI     Dockerfile, Docker-Compose, K8S dep, NGINX Ingress, ssl

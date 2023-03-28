@@ -49,7 +49,7 @@ spec:
               value: guest     
           # livenessProbe: 
           #   httpGet:
-          #     path: /
-          #     port: 80
+          #     path: /rabbitmq
+          #     port: 15672
           #   periodSeconds: 10 
           #   initialDelaySeconds: 5   
