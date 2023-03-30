@@ -2,13 +2,13 @@
 ```sh
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-helm install nginx-ingress ingress-nginx/ingress-nginx --namespace web --set controller.replicaCount=1
+helm install nginx-ingress ingress-nginx/ingress-nginx --namespace web --set controller.replicaCount=2
 helm uninstall nginx-ingress --namespace myingress 
 
-kubectl apply -f dep-namespaces.yaml -f dep-api-applicants.yaml -f dep-api-identity.yaml -f dep-api-jobs.yaml -f dep-mssql.yaml -f dep-rabbitmq.yaml -f dep-redis.yaml -f dep-role.yaml -f dep-web.yaml -f dep-nginx-ingress.yaml -f dep-nginx-secret.yaml -f dep-log.yaml
+kubectl apply -f dep-namespaces.yaml -f dep-api-applicants.yaml -f dep-api-identity.yaml -f dep-api-jobs.yaml -f dep-mssql.yaml -f dep-rabbitmq.yaml -f dep-redis.yaml -f dep-web.yaml -f dep-nginx-ingress.yaml -f dep-systemmetrics.yaml
+ 
 
-
-kubectl delete -f dep-namespaces.yaml -f dep-api-applicants.yaml -f dep-api-identity.yaml -f dep-api-jobs.yaml -f dep-mssql.yaml -f dep-rabbitmq.yaml -f dep-redis.yaml -f dep-role.yaml -f dep-web.yaml -f dep-nginx-ingress.yaml -f dep-nginx-secret.yaml
+kubectl delete 
 ```
 Web Pages:
 http://localhost/

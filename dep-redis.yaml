@@ -38,10 +38,10 @@ spec:
         resources:
           requests:
             memory: "500Mi"
-            cpu: "0.5"
+            cpu: "4m"
           limits:
-            memory: "1500Mi"
-            cpu: "1"
+            memory: "500Mi"
+            cpu: "4m"
         volumeMounts:
         - name: user-data-volume
           mountPath: /data

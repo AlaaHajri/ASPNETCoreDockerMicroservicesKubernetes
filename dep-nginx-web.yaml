@@ -1,0 +1,84 @@
+# problem fix : https://stackoverflow.com/questions/56723867/kubernetes-nginx-ingress-rabbitmq-management-and-kibana
+# helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+# helm repo update
+# helm install nginx-ingress ingress-nginx/ingress-nginx --namespace web --set controller.replicaCount=2
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  namespace: web
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: web-service
+                port:
+                  number: 80
+            path: /
+    - host: rabbitmq.localhost
+      http:
+        paths:            
+          - pathType: Prefix
+            backend:
+              service:
+                name: rabbitmq-service
+                port:
+                  number: 15672
+            path: /
+    - host: statemetrics.localhost
+      http:
+        paths:               
+          - pathType: Prefix
+            backend:
+              service:
+                name: prometheus-kube-state-metrics
+                port:
+                  number: 8080
+            path: /             
+    - host: prometheus.localhost
+      http:
+        paths:               
+          - pathType: Prefix
+            backend:
+              service:
+                name: prometheus-server
+                port:
+                  number: 9090
+            path: /  
+    - host: grafana.localhost
+      http:
+        paths:               
+          - pathType: Prefix
+            backend:
+              service:
+                name: prometheus-grafana
+                port:
+                  number: 80
+            path: /                      
+  tls:
+    - hosts:
+      - localhost
+      - rabbitmq.localhost
+      - prometheus.localhost
+      - grafana.localhost
+      secretName: nginx-tls-secret                
+--- # TLS Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nginx-tls-secret
+  namespace: web
+type: kubernetes.io/tls
+data:
+  tls.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDOXpDQ0FkOENGQVIyWi9XcTZ6QU5DMDZ1WjZrUGczREt0cFk4TUEwR0NTcUdTSWIzRFFFQkN3VUFNRGd4DQpFakFRQmdOVkJBTU1DV3h2WTJGc2FHOXpkREVpTUNBR0NTcUdTSWIzRFFFSkFSWVRZV3hoWVM1b1lXcHlhVUI1DQpibTkyTG1OdmJUQWVGdzB5TXpBek1qa3lNakV4TUROYUZ3MHlOREF6TWpneU1qRXhNRE5hTURneEVqQVFCZ05WDQpCQU1NQ1d4dlkyRnNhRzl6ZERFaU1DQUdDU3FHU0liM0RRRUpBUllUWVd4aFlTNW9ZV3B5YVVCNWJtOTJMbU52DQpiVENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFMK1hjV1pSWTFTQXUvczIzd0RaDQozOXZiS242andWQkllMGRhbzNMNGdvZEdETW9hY3kwdHB0NkcvS1BGSFJmcm51K2tGMTMwd2VscnNhMnJ0Ung5DQo1ZXAyenVyOTZOL290R0t1YXFybVRZTTh6cDV1RmRKNTc5Y3V1MDJTVGloSVU1UWl0VXVuUUFXcG11bm9XdHpuDQovMG5JTzRVQjVmYitlQkJua1BoT0svS29icUU5MTFYRkpBNytqRUY4QjZKNXZsbzZReVFXVlF0U0hPckR4NGg4DQorS3g5Y01SNWtoeitBcTRmckZGTlk5dHFHd3BuSGdEZ05nbFkzYjAyM1JxVS8zUStDTkE5U2JDbXAvZzVMT3h4DQpFOUNCSjBZNktRUVk4MXRhODlVZlZDOHc0RkQ0OURUTE40ZUlkWHp6aUp4dHM3dGI4K29jZjZkSGpHNDF0aTEwDQowZmNDQXdFQUFUQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFSV0JIeEZyZGZFc1dKeTRhWllHK0MrQW8xVi8vDQo2VmJ3MzM0S24wWjJzckhnbTRibVVGSmMraVM1NElkWUJwdDZKNE5NVWJicHBOZmhIVDIrUHU2RE5kOCszMkg1DQpPaUhsWEw0RTRJVnFuSE9ReExGTytjdEw1ODd2T3kvaFJUc1U3cytWKzhGNHVnRC9kNDI0T0hmWnhGVTNvZWdBDQpYUG1ZbFlqdUFlK1oyVFFrNDF0ZkVkRVVQN3k3d0c2VHA4L1ZtbW1uR0EvK1l4ancxVC96R3BGSW5rMmxBa1Z0DQo5NmpTbTU4eWRwL09uOWhVZHBTYTlsNUtDbWpqOFdrQ1BOTWI4T3VHcEd5bVB0TG1RZTZuMUo4Sjk1T3JOTzlEDQoyS0NWVnJkTFJ1S1F5NitZUWREc05jc1M3cGh0MGNPOTZseTFaTlJIRHErSGNVaTBzaWh6blFtVkdBPT0NCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0NCg==
+  tls.key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tDQpNSUlFdmdJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLZ3dnZ1NrQWdFQUFvSUJBUUMvbDNGbVVXTlVnTHY3DQpOdDhBMmQvYjJ5cCtvOEZRU0h0SFdxTnkrSUtIUmd6S0duTXRMYWJlaHZ5anhSMFg2NTd2cEJkZDlNSHBhN0d0DQpxN1VjZmVYcWRzN3EvZWpmNkxSaXJtcXE1azJEUE02ZWJoWFNlZS9YTHJ0TmtrNG9TRk9VSXJWTHAwQUZxWnJwDQo2RnJjNS85SnlEdUZBZVgyL25nUVo1RDRUaXZ5cUc2aFBkZFZ4U1FPL294QmZBZWllYjVhT2tNa0ZsVUxVaHpxDQp3OGVJZlBpc2ZYREVlWkljL2dLdUg2eFJUV1BiYWhzS1p4NEE0RFlKV04yOU50MGFsUDkwUGdqUVBVbXdwcWY0DQpPU3pzY1JQUWdTZEdPaWtFR1BOYld2UFZIMVF2TU9CUStQUTB5emVIaUhWODg0aWNiYk83Vy9QcUhIK25SNHh1DQpOYll0ZE5IM0FnTUJBQUVDZ2dFQUJFOHZXeU5NeVpTUzA0M25MeXVsRmJZNVZtU1VZWnYzdndaNVlSdjlaNXJNDQppUHlmZFFDY3l5b2NQc0ZVSy9ySFB5ME9kbG1kNmhhQUdJUkYrZkJ3YkJTU2RRWHUzbnI5cXgwZWVxZHZCWnNEDQpVQ1ZldkNRaXNtTnFWdk1jSWUxanJaUVYvUjJ6a1hHYnpRcWh6dG5EQXJZTVVUNE5NQzJyT0dLcTBONWdyZmErDQpDMFhaV2JkNHdRZVBKWUQzeXBDSUdpK1RnS3MwTGtvOTlENlRUV1JIaWtPUWVlLzQ2Zm9xVnFBdlRjR1k4TFRqDQptYSsvZTF3U3VyK1BySlRaZkZPUmFoaFh4enE0Q2RveWdnbDJpVU5nN1NaMVQrRGo3ZWpJNzFULzBUaGxoQk84DQo1K1JsSzZONWgxVExLYzZGUk1EQ2JqbU1YVVBCUSsyKzQzb3pscjNDOFFLQmdRRFAzZUtPOERPQmptVXZ6NWpGDQpVd1pTRVI0SmdyRGVxb0JubHEzRURmTDVveXhUY2FwV1U0cHhwVk8zQmdadWQxSVM2Yjg3WWdtc2s2UGRuSHJGDQo5UWRkUElCK3hCWFBvQUNpS1FrL2NPM3MzSDdJY3dNLzl4aCtXdEphdXlkeVJrQ1phd3NMRUl5Y0lVTit3Q2RxDQoyS1MydXVMU1M3YkhFeW12dDNNbmdnTlc4UUtCZ1FEcjlNaXNNZmgyeitMdHlENUNnTkRnbXhhTVZDQ25XcFNiDQo1cGhlWE5veGdTRk5NWlh2c1F5eksvWHBVamRlWWdidklZYVMyY09nK1NreXc4U3M1SmVFQ0hoaERKT1RoUm9lDQpvTWtYT1EvSFNCS1F1OGlnZmZrbkhiOEVhbFBNaW5TNklTajhBT284cnoyNFpkZ2ZvS3lpMGlnc2dXbERlMHJpDQo4STBiQVFCSFp3S0JnUUNDWk1jVk1WcXQvN3c3MUxjWnVTNHkxdWdId1VMZ093YVhkSzhHV0ZXK0FYenh6MUN5DQpIRyt4UUt1V0dTSjVzMEg1K1VWcm8rRTdyOVhRVTdPMGNET3hhaDJVNTc1aTR4VGlwR2xYc2FpZXQrYVVLWW0xDQpXM1N5OXBnVU1HamJSM1NJaU55QmtWMFRKODZtT1RYQTBhdnBzS3hPalE1WUxRNHVXeDdTZnIxSGtRS0JnRXJjDQpzaUo0QkVYbDlURE9ISHJMRmZwOUdpMVJyNzZKTGFjOUJWRERFdk1yN2gzb3dwSjIwUG16MCtUQUVoTWU5T1kvDQo4OHQ1emVpdnhOTjNhMW9UZU1NS1VPOHhwMHpocVFUWXJKUnlwVC9yN1FBQXBFblBUaEtNRElQaEhFOUVDbjdYDQpjSUpyNCtWM0VCVUdNd2p0MkhnY1IyUy9kbDlUcWRIUTBtUWo4Q3UzQW9HQkFNdDdsMk5nd1JTNjJtQVo3azlzDQpYN3N6QlF0bkVQWU1WSlN1am9pc3FkZ0NDZHQwcGkreTV3TktOUkxHSkkrb2hGMHB3SC93V016NnF2eW9tTXozDQp1Zk1iYmVRL0I1K28wRVBEejJyWFphRjNvMlppN0lkVVl6elZBRDBGVDJMc0ZYNGFhbVlicmVwdnJka2VYbWo5DQpCTm1yQmdKSHMzNjZEbkl5MFJJU1psRGINCi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0NCg==
+
