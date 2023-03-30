@@ -60,36 +60,3 @@ spec:
   resources:
     requests:
       storage: 2Gi
-
-#         volumeMounts:
-#           - name: mssql-data
-#             mountPath: /var/opt/mssql
-#       volumes:
-#         - name: mssql-data
-#           persistentVolumeClaim:
-#             claimName: mssql-data-claim
-# ---
-# apiVersion: v1
-# kind: PersistentVolume
-# metadata:
-#   name: mssql-data
-# spec:
-#   storageClassName: resizable-storage
-#   capacity:
-#     storage: 5Gi
-#   accessModes:
-#     - ReadWriteOnce
-#   hostPath:
-#     path: /mnt/data/mssql
-# --- 
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: mssql-data-claim
-# spec:
-#   storageClassName: resizable-storage
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 5Gi

@@ -66,6 +66,13 @@ echo “username_value” | openssl base64 -d ; echo
 
 
 
+#### LOG ###### Kubernetes Logging with Elasticsearch, Fluentd, and Kibana
+
+
+
+
+
+
 
 
 
