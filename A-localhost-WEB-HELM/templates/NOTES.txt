@@ -1,0 +1,25 @@
+___________________________________________________________________________________________
+ \ \        / / | |     | |/ /    | |                        | |           
+  \ \  /\  / /__| |__   | ' /_   _| |__   ___ _ __ _ __   ___| |_ ___  ___ 
+   \ \/  \/ / _ \ '_ \  |  <| | | | '_ \ / _ \ '__| '_ \ / _ \ __/ _ \/ __|
+    \  /\  /  __/ |_) | | . \ |_| | |_) |  __/ |  | | | |  __/ ||  __/\__ \
+     \/  \/ \___|_.__/  |_|\_\__,_|_.__/ \___|_|  |_| |_|\___|\__\___||___/
+
+Maintened by: Alaa HAJRI   Email: alaahajri@ynov.com   github: https://github.com/AlaaHajri                                                                         
+___________________________________________________________________________________________
+URL:
+    Web:        http://{{ .Values.nginx.hostweb }}          
+    Rabbitmq:   http://{{ .Values.nginx.hostrabbitmq }}     
+    SSL: {{ .Values.nginx.sslRedirect}}
+    REGEX: {{ .Values.nginx.useRegex}}
+___________________________________________________________________________________________
+MemoryRequest and Limits:(True/false)   
+| Name           | Limits| LivenessProbe |
+|----------------|-------|---------------|
+| Web            | {{ .Values.web.useRessouceReqLim}} | N/A           |
+| api-applicants | {{ .Values.api.applicants.useRessouceReqLim}} | {{ .Values.api.applicants.useLivenessProbe}}         |
+| api-identity   | {{ .Values.api.identity.useRessouceReqLim}} | {{ .Values.api.identity.useLivenessProbe}}         |
+| api-jobs       | {{ .Values.api.jobs.useRessouceReqLim}} | {{ .Values.api.jobs.useLivenessProbe}}         |
+| mssql          | {{ .Values.mssql.useRessouceReqLim}} | N/A           |
+| redis          | {{ .Values.redis.useRessouceReqLim}} | N/A           |
+| rabbitmq       | {{ .Values.rabbitmq.useRessouceReqLim}} | N/A           |

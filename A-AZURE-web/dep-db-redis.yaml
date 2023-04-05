@@ -1,0 +1,64 @@
+# service-redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-user-data
+  namespace: web
+spec:
+  selector:
+    app: user-data-pod
+  ports:
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379
+  type: ClusterIP
+--- # redis-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-data-dep
+  namespace: web
+  labels:
+    app: user-data
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-data-pod
+  template:
+    metadata:
+      labels:
+        app: user-data-pod
+    spec:
+      containers: #redis-cont
+      - name: user-data-cont
+        image: alaahajri/redis:latest
+        ports:
+        - containerPort: 6379
+        # resources:
+        #   # requests:
+        #   #   memory: "500Mi"
+        #   #   cpu: "4m"
+        #   limits:
+        #     memory: "2Gi"
+        #     cpu: "0.5"
+        volumeMounts:
+        - name: user-data-volume
+          mountPath: /data
+      volumes:
+      - name: user-data-volume
+        persistentVolumeClaim:
+          claimName: user-data-volume-claim
+      restartPolicy: Always
+--- #volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: user-data-volume-claim
+  namespace: web
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi            

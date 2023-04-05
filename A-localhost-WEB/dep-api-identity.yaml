@@ -1,0 +1,61 @@
+--- #service-api-identity
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-identity
+  namespace: web
+spec:
+  selector:
+    app: api-identity-pod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+--- #api-identity-dep          
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-identity-dep
+  namespace: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-identity-pod
+  template:
+    metadata:
+      labels:
+        app: api-identity-pod
+    spec:
+      containers:
+        - name: api-identity-cont
+          image: alaahajri/service-api-identity:latest
+          env:
+            - name: RedisHost
+              value: "service-user-data:6379"
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.web
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_PASS
+          # resources:
+          #   # requests:
+          #   #   cpu: "0.25"
+          #   #   memory: "150Mi"
+          #   limits:
+          #     cpu: "0.5"
+          #     memory: "1500Mi"              
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /rabbitmq
+          #     port: 15672
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5   

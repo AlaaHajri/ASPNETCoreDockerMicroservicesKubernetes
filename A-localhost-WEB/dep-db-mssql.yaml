@@ -1,0 +1,62 @@
+--- # mssql-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-mssql-linux
+  namespace: web
+spec:
+  selector:
+    app: mssql-linux-pod
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+  type: ClusterIP
+--- # mssql-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mssql-linux-dep
+  namespace: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mssql-linux-pod
+  template:
+    metadata:
+      labels:
+        app: mssql-linux-pod
+    spec:
+      containers:
+      - name: mssql-linux-cont
+        image: alaahajri/mssql-linux
+        ports:
+        - containerPort: 1433
+        # resources:
+        #   # requests:
+        #     # cpu: "1"
+        #     # memory: "1Gi"
+        #   limits:
+        #     cpu: "1"
+        #     memory: "3Gi"        
+        volumeMounts:
+        - name: mysql-volume
+          mountPath: /var/opt/mssql/data
+      volumes:
+      - name: mysql-volume
+        persistentVolumeClaim:
+          claimName: mysql-volume-claim
+      restartPolicy: Always
+--- #volume
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-volume-claim
+  namespace: web
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi

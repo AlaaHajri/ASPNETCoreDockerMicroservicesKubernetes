@@ -1,0 +1,74 @@
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.api.jobs}}
+  name: {{.nameSer }} 
+  namespace: {{.namespace }}    
+spec:
+  selector:
+    app: {{.namePod }} 
+  ports:
+  - protocol: {{.protocol }}  
+    port: {{.port }}  
+    targetPort: {{.port }}  
+  type: {{.type }} 
+  {{- end}}    
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.api.jobs}}
+  name: {{.nameDep }} 
+  namespace: {{.namespace }}  
+spec:
+  replicas: {{.replicas }} 
+  selector:
+    matchLabels:
+      app: {{.namePod }} 
+  template:
+    metadata:
+      labels:
+        app: {{.namePod }} 
+    spec:
+      containers:
+        - name: {{.nameCon }} 
+          image: {{.imageUR }} 
+          env:
+            - name: ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: ConnectionString-jobs
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.web
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_PASS 
+
+          {{- if.useRessouceReqLim }}
+          resources:
+            requests:
+              cpu: {{.reqCpu }}
+              memory: {{.reqMem }}
+            limits:
+              cpu: {{.limCpu }}
+              memory: {{.limMem }} 
+          {{- end }}                   
+          
+          {{- if.useLivenessProbe }}                  
+          livenessProbe: 
+            httpGet:
+              path: {{.httpGetpath }}
+              port: {{.httpGetport }}
+            periodSeconds: {{.periodSeconds }} 
+            initialDelaySeconds: {{.initialDelaySeconds }}   
+          {{- end }}   
+  {{- end}}   

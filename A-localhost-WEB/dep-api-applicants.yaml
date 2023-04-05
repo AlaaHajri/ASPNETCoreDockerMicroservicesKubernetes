@@ -1,0 +1,64 @@
+--- # service-applicants-api
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-applicants
+  namespace: web
+spec:
+  selector:
+    app: api-applicants-pod
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+--- # api-applicants-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-applicants-dep
+  namespace: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-applicants-pod
+  template:
+    metadata:
+      labels:
+        app: api-applicants-pod
+    spec:
+      containers:
+        - name: api-applicants-cont
+          image: alaahajri/service-api-applicants:latest
+          resources:
+            # requests:
+            #   cpu: "0.25"
+            #   memory: "150Mi"
+            limits:
+              cpu: "0.5"
+              memory: "1500Mi" 
+          env:
+            - name: ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: ConnectionString-applicants
+            - name: RABBITMQ_HOST
+              value: rabbitmq-service.web
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_PASS
+          # livenessProbe: 
+          #   httpGet:
+          #     path: /rabbitmq
+          #     port: 15672
+          #   periodSeconds: 10 
+          #   initialDelaySeconds: 5       

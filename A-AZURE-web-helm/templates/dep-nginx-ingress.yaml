@@ -1,0 +1,60 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  namespace: web
+  annotations: 
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true" 
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: {{ .Values.nginx.ingressClassName }} 
+  rules:
+    - http:      
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.web.nameSer }} 
+                port:
+                  number: {{ .Values.web.port }} 
+            path: /     
+    - host: {{ .Values.nginx.hostweb }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.web.nameSer }} 
+                port:
+                  number: {{ .Values.web.port }} 
+            path: /     
+    - host: {{ .Values.nginx.hostrabbitmq }} 
+      http:
+        paths:           
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.rabbitmq.nameSer }} 
+                port:
+                  number: {{ .Values.rabbitmq.managementPort }} 
+            path: /      
+
+        
+  tls:
+    - hosts:
+      - {{ .Values.nginx.hostweb }} 
+      - {{ .Values.nginx.hostrabbitmq }}    
+      secretName: {{ .Values.nginx.secretName }}       
+# Adding TLS secret and replacing the value is not useful since i generated the secret beforehand
+# using : kubectl create secret tls nginx-tls-secret  --key localhost.key --cert localhost.crt -n web      
+# --- # TLS Secret
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: nginx-tls-secret
+#   namespace: web
+# type: kubernetes.io/tls
+# data:
+#   tls.crt: 
+#   tls.key: 

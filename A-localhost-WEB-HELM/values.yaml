@@ -1,0 +1,202 @@
+nginx:
+  name: web-ingress
+  namespace: web
+  
+  sslRedirect: true
+  useRegex: true
+  rewriteTarget: /
+  ingressClassName: nginx
+
+  hostweb: localhost
+  hostrabbitmq: rabbitmq.localhost
+  
+  secretName: nginx-tls-secret
+web:
+  namespace: web
+  imageUR: "alaahajri/web:latest"
+  nameSer: web-service
+  namePod: web-pod
+  nameDep: web-dep
+  nameCon: web-cont
+
+  replicas: "1"
+  protocol: TCP
+  port: 80
+  type: ClusterIP
+
+  useRessouceReqLim: False
+  reqCpu: "900Mi"
+  reqMem: "4m"
+  limCpu: "1"
+  limMem: "2000Mi" 
+
+  # useAspnetDev: True #ASPNETCORE_ENVIRONMENT=Development
+  # SERVICE_API_IDENTITY: "http://api-identity-service.web"
+  # SERVICE_API_JOBS: "http://api-jobs-service.web"
+
+api:
+  applicants:
+    namespace: web
+    imageUR: "alaahajri/service-api-applicants:latest"
+    nameSer: api-applicants-service
+    namePod: api-applicants-pod
+    nameDep: api-applicants-dep
+    nameCon: api-applicants-cont
+
+    replicas: 1
+    protocol: TCP
+    port: 80
+    type: ClusterIP
+
+    useRessouceReqLim: False
+    reqCpu: "0.25"
+    reqMem: "150Mi"
+    limCpu: "0.5"
+    limMem: "1500Mi" 
+
+    useLivenessProbe: False 
+    httpGetpath: /rabbitmq
+    httpGetport: 15672
+    periodSeconds: 10
+    initialDelaySeconds: 5
+
+  identity:
+    namespace: web
+    imageUR: "alaahajri/service-api-identity:latest"
+    nameSer: api-identity-service
+    namePod: api-identity-pod
+    nameDep: api-identity-dep
+    nameCon: api-identity-cont
+
+    replicas: "1"
+
+    protocol: TCP
+    port: 80
+    type: ClusterIP
+
+    useRessouceReqLim: False
+    reqCpu: "0.25"
+    reqMem: "150Mi"
+    limCpu: "0.5"
+    limMem: "1500Mi" 
+
+    useLivenessProbe: False 
+    httpGetpath: /rabbitmq
+    httpGetport: "15672"
+    periodSeconds: "10"
+    initialDelaySeconds: "5"
+
+  jobs:
+    namespace: web
+    imageUR: "alaahajri/service-api-jobs:latest"
+    nameSer: api-jobs-service
+    namePod: api-jobs-pod
+    nameDep: api-jobs-dep
+    nameCon: api-jobs-cont
+
+    replicas: 1
+
+    protocol: TCP
+    port: 80
+    type: ClusterIP
+
+    useRessouceReqLim: False
+    reqCpu: "0.25"
+    reqMem: "150Mi"
+    limCpu: "0.5"
+    limMem: "1500Mi" 
+
+    useLivenessProbe: False 
+    httpGetpath: /rabbitmq
+    httpGetport: "15672"
+    periodSeconds: "10"
+    initialDelaySeconds: "5"    
+
+mssql:
+  namespace: web
+  imageUR: "alaahajri/mssql-linux"
+  nameSer: mssql-linux-service
+  namePod: mssql-linux-pod
+  nameDep: mssql-linux-dep
+  nameCon: mssql-linux-cont
+
+  replicas: "1"
+  protocol: TCP
+  port: 1433
+  type: ClusterIP
+
+  useRessouceReqLim: False
+  reqCpu: "1"
+  reqMem: "1Gi"
+  limCpu: "2"
+  limMem: "2Gi" 
+
+  volumeName: mysql-volume
+  mountPath: "/var/opt/mssql/data"
+  claimName: mysql-volume-claim
+  restartPolicy: Always
+  storage: "2Gi"
+
+redis:
+  namespace: web
+  imageUR: "alaahajri/redis:latest"
+  nameSer: user-data-service
+  namePod: user-data-pod
+  nameDep: user-data-dep
+  nameCon: user-data-cont
+
+  replicas: 1
+
+  protocol: TCP
+  port: 6379
+  type: ClusterIP
+
+  useRessouceReqLim: False
+  reqCpu: "1"
+  reqMem: "1Gi"
+  limCpu: "2"
+  limMem: "2Gi" 
+
+  volumeName: user-data-volume
+  mountPath: /data
+  claimName: user-data-volume-claim
+  restartPolicy: Always
+  storage: "2Gi"
+
+rabbitmq:
+  namespace: web
+  imageUR: "alaahajri/rabbitmq:3-management"
+  nameSer: rabbitmq-service
+  namePod: rabbitmq-pod
+  nameDep: rabbitmq-dep
+  nameCon: rabbitmq-cont
+
+  replicas: 1
+
+  managementPort: 15672
+  managementProtocol: TCP
+  managementName: management
+
+  amqpPort: 5672
+  amqpProtocol: TCP
+  amqpName: amqp
+
+  type: ClusterIP
+
+  useRessouceReqLim: False
+  reqCpu: "0.5"
+  reqMem: "500Mi"
+  limCpu: "1"
+  limMem: "1500Mi" 
+
+
+
+
+
+
+
+
+####################################
+# monitoring
+# ####################################
+# logging

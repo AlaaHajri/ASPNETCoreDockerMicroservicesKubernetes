@@ -1,0 +1,9 @@
+apiVersion: v2
+name: web
+description: A Helm chart for web 
+home: https://github.com/AlaaHajri
+maintainers:
+  - name: AlaaHAJRI
+    email: alaa.hajri@ynov.com
+type: application
+version: 0.3.0

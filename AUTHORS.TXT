@@ -1,2 +1,25 @@
-PRENOM  NOM       RESPONSABILITES 
-Alaa    HAJRI     Dockerfile, Docker-Compose, K8S dep, NGINX Ingress, ssl
+NOM         PRENOM      RESPONSABILITES
+HAJRI       Alaa
+                        Dockerfile
+                        Docker-Compose
+                        K8S------------:PersistentVolumeClaim, PersistentVolume, Service, Deployment, Secrets (Rabbitmq & Mssql)
+                        NGINX Ingress
+                        SSL------------: localhost.conf/.crt/.csr/.key
+                        Log
+                        Monitoring
+                        Vault
+                        HELM
+SOUAI       Ahmed
+                        N/A
+SANSOUCI    Abel
+                        N/A
+BONDONGA    Yannis
+                        N/A
+
+
+
+
+
+
+
+

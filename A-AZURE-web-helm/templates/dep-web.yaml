@@ -1,0 +1,57 @@
+--- # web service
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.web}}
+  name: {{.nameSer }} 
+  namespace: {{.namespace }} 
+spec:
+  type: {{.type }} 
+  ports:
+  - port: {{.port }} 
+    targetPort: {{.port }} 
+    protocol: {{.protocol }} 
+  selector:
+    app: {{.namePod }} 
+  {{- end}}       
+--- # web-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.web}}
+  name: {{.nameDep }} 
+  namespace: {{.namespace }} 
+spec:
+  replicas: {{.replicas }} 
+  selector:
+    matchLabels:
+      app: {{.namePod }} 
+  template:
+    metadata:
+      labels:
+        app: {{.namePod }} 
+    spec:
+      containers:
+      - name: {{.nameCon }}                  
+        image: {{.imageUR }}
+        ports:
+        - containerPort: {{.port }} 
+
+        env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: {{.useAspnetDev }} 
+          - name: SERVICE_API_IDENTITY
+            value: {{.serviceApiIdentity }}  
+          - name: SERVICE_API_JOBS
+            value: {{.serviceApiJobs }} 
+
+        {{- if.useRessouceReqLim }}
+        resources:
+          requests:
+            cpu: {{.reqCpu }}
+            memory: {{.reqMem }}
+          limits:
+            cpu: {{.limCpu }}
+            memory: {{.limMem }} 
+        {{- end }}               
+  {{- end}}              

@@ -1,0 +1,68 @@
+--- # rabbitmq-service
+apiVersion: v1
+kind: Service
+metadata:
+  {{- with .Values.rabbitmq}}
+  name: {{.nameSer }} 
+  namespace: {{.namespace }} 
+spec:
+  type: {{.type }} 
+  ports:  # The name field is required when a service has more than one port.
+  - port: {{.managementPort }}
+    targetPort: {{.managementPort }} 
+    protocol: {{.managementProtocol }} 
+    name: {{.managementName }} 
+  - port: {{.amqpPort }} 
+    targetPort: {{.amqpPort }} 
+    protocol: {{.amqpProtocol }}  
+    name: {{.amqpName }}  
+  selector:
+    app: {{.namePod }}
+  {{- end}}    
+--- # rabbitmq-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  {{- with .Values.rabbitmq}}
+  name: {{.nameDep }}
+  namespace: {{.namespace }}
+spec:
+  replicas: {{.replicas }} 
+  selector:
+    matchLabels:
+      app: {{.namePod }}
+  template:
+    metadata:
+      labels:
+        app: {{.namePod }} 
+    spec:
+      containers:
+      - name: {{.nameCon }} 
+        image: {{.imageUR }} 
+        ports:
+        - containerPort: {{.managementPort }} 
+        - containerPort: {{.amqpPort }}    
+
+        env:
+          - name: RABBITMQ_DEFAULT_USER
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-secret
+                key: RABBITMQ_DEFAULT_USER
+          - name: RABBITMQ_DEFAULT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: rabbitmq-secret
+                key: RABBITMQ_DEFAULT_PASS
+                
+        {{- if.useRessouceReqLim }}
+        resources:
+          requests:
+            cpu: {{.reqCpu }}
+            memory: {{.reqMem }}
+          limits:
+            cpu: {{.limCpu }}
+            memory: {{.limMem }} 
+        {{- end }}                     
+  {{- end}} 
+

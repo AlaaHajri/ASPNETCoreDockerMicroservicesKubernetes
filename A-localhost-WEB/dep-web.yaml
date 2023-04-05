@@ -1,0 +1,49 @@
+--- # web service
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: web
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: web-pod
+--- # web-dep
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-dep
+  namespace: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-pod
+  template:
+    metadata:
+      labels:
+        app: web-pod
+    spec:
+      containers:
+      - name: web-cont                  #web
+        image: alaahajri/web:latest
+        ports:
+        - containerPort: 80
+        # resources:
+        #   # requests:
+        #   #   memory: "900Mi"
+        #   #   cpu: "4m"
+        #   limits:
+        #     memory: "2000Mi"
+        #     cpu: "1"
+        env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: "Development"
+          - name: SERVICE_API_IDENTITY
+            value:  http://service-api-identity.web
+          - name: SERVICE_API_JOBS
+            value: http://service-api-jobs.web
