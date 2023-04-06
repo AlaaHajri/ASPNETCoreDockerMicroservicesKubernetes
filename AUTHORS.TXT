@@ -1,25 +1,25 @@
+___________________________________________________________________________________________________________________________________
 NOM         PRENOM      RESPONSABILITES
 HAJRI       Alaa
-                        Dockerfile
-                        Docker-Compose
-                        K8S------------:PersistentVolumeClaim, PersistentVolume, Service, Deployment, Secrets (Rabbitmq & Mssql)
-                        NGINX Ingress
-                        SSL------------: localhost.conf/.crt/.csr/.key
-                        Log
-                        Monitoring
-                        Vault
-                        HELM
+                        Dockerfile-----: Web, 3 API, Ms-sql
+                        Docker-Compose-: F-Dockerfiles\docker-compose.yml : 
+                        K8S------------: PersistentVolumeClaim, PersistentVolume, Service, Deployment, Secrets (Rabbitmq & Mssql)
+                        NGINX Ingress--: kibana, rabbit, DNS NO-IP "ynovlab.ddns.net"
+                        SSL------------: localhost.conf/.crt/.csr/.key, Aussi SSL : ynovlab.ddns.net (NO-IP)
+                        Log------------: Elasticsearch, Filebeat, Kibana, logstash, metricbeat
+                        Monitoring-----: Prometheus, alertmanger, Grafana, KubeStateMetrics
+                        HELM-----------: Template HELM pour Web 
+                        Vault----------:
+                        
 SOUAI       Ahmed
-                        N/A
+                        Nginx-ingress, SSL 
 SANSOUCI    Abel
-                        N/A
+                        Deployment 3 API: 
 BONDONGA    Yannis
-                        N/A
+                        Deployment RabbitMQ et Reddis, Volumes
+___________________________________________________________________________________________________________________________________
 
+VOIR : README.md 
 
-
-
-
-
-
+___________________________________________________________________________________________________________________________________
 

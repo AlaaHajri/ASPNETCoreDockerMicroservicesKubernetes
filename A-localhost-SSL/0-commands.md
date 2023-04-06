@@ -20,3 +20,12 @@ openssl genrsa -out ca.key 2048
 openssl req -new -key ca.key -out ca.csr -subj "/CN=localhost"
 openssl x509 -req -days 365 -in ca.csr -signkey ca.key -out ca.crt
 kubectl create secret tls nginx-tls-secret  --key ca.key --cert ca.crt -n web
+
+
+
+
+
+
+kubectl get secret --namespace kube-system konnectivity-certs -o yaml
+echo “password_value” | openssl base64 -d ; echo
+echo U0pzZk9FUjR5dHRuV0JDUEdmWENMYXpISnkxSHZ2NDZkTDMxa3hmbg== | openssl base64 -d ; echo

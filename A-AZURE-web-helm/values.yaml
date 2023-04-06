@@ -47,7 +47,7 @@ api:
     port: 80
     type: ClusterIP
 
-    useRessouceReqLim: False
+    useRessouceReqLim: false
     reqCpu: "0.25"
     reqMem: "150Mi"
     limCpu: "0.5"

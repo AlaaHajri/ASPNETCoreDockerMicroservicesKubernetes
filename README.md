@@ -1,805 +1,181 @@
-# Welcome
-This version is created from the preview `ASPNETCoreDockerMicroservices` project. You can find it here URL: 
-# Introduction: 
-This project is a modified version of a previous project that was designed to run on `DockerCompose`. The goal of this project is to adapt the previous project to meet `Kubernetes` standards.
-
-The Kubernetes standards require that container names cannot use the `.` character, instead `-` must be used. This issue has been resolved.
-
-The source files for the three API services and the web container contain static values for the `RabbitMQ` server, username, and password. To address this issue, changes have been made to the `C# startup.cs file`, which adds three variables that can be retrieved as environment values from DockerCompose or Kubernetes.
-
-The web container's source file contains a `JSON` file that contains static values for two `API`. To resolve this issue, `jq` has been used to modify the `JSON` file core before the `.csproj` is restored in the first build of the container.
-
-`For Web:`
-
-The `IdentityApiUrl` and `JobsApiUrl` values in the `Web\appsettings.json` file are crucial to establishing a connection with the database to retrieve input. However, JSON files do not allow for the use of variables that could be received from an environment variable, as can be done in `C#` or `JS`.
-
-To address this issue, a workaround was implemented in the `Dockerfile.web` which installs `jq`, a command-line tool used to parse and manipulate `JSON` data. This tool was added to the `Dockerfile.web` and used to run the environment variables before running the RUN dotnet restore `/src/Web/Web.csproj` command.
-
-It is important to note that all of these changes were made to adapt to Kubernetes naming syntax and kubectl namespaces for further network development. These changes have been tested and are working, so the issue is considered solved.
-#   Credit:
-| Name           | GitHub Profile                               |
-| -------------- | --------------------------------------------- |
-| Alaa HAJRI     | https://github.com/AlaaHajri                 |
-| Vincent Leclerc| https://github.com/bart120                   |
-| Mark Macneil   | https://github.com/mmacneil                  |
-| RabbitMQ       | https://github.com/rabbitmq                  |
-# TO START THIS PROJECT RUN THESE COMMANDS:
-```sh
-minikube start --driver=docker
-minikube status
-minikube dashboard
-kubectl apply -f dep-web.yaml -f dep-redis.yaml -f dep-rabbitmq.yaml -f dep-mssql.yaml -f dep-api-jobs.yaml -f dep-api-identity.yaml -f dep-api-applicants.yaml -f dep-ingress.yml
-minikube service rabbitmq-service
-minikube service web-service
+# Deployment AZURE : WEB
+## Performance
+Integration des limites et des request en terme de CPU et MEM
+## Instalation de NGINX-INGRESS
+    ```sh
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm repo update
+    helm install nginx-ingress ingress-nginx/ingress-nginx --namespace web --set controller.replicaCount=2
+    helm uninstall nginx-ingress --namespace myingress 
+    ```
+## Lancemeent des deployment 
+kubectl apply -f A-AZURE-web
+_____________________________________________________________
+# HELM: Template pour WEB: 
+## True/False: 
+```YAML : VALUES
+    useRessouceReqLim: false
+    reqCpu: "0.25"
+    reqMem: "150Mi"
+    limCpu: "0.5"
+    limMem: "1500Mi" 
 ```
-# TROUBLESHOOTING: 
-``` sh
-minikube cache delete
-kubectl delete -f dep-web.yaml -f dep-redis.yaml -f dep-rabbitmq.yaml -f dep-mssql.yaml -f dep-api-jobs.yaml -f dep-api-identity.yaml -f dep-api-applicants.yaml -f dep-ingress.yml -f dep-nginx.yml
-minikube stop
-minikube delete
-minikube start --driver=docker
+``` YAML : deployment ressource control 
+        {{- if.useRessouceReqLim }}
+        resources:
+        requests:
+            cpu: {{.reqCpu }}
+            memory: {{.reqMem }}
+        limits:
+            cpu: {{.limCpu }}
+            memory: {{.limMem }} 
+        {{- end }}    
+
+        {{- if.useLivenessProbe }}                  
+        livenessProbe: 
+        httpGet:
+            path: {{.httpGetpath }}
+            port: {{.httpGetport }}
+        periodSeconds: {{.periodSeconds }} 
+        initialDelaySeconds: {{.initialDelaySeconds }}   
+        {{- end }}      
 ```
-![This is an image](https://i.imgur.com/Ck216Ng.png)
-![This is an image](https://i.imgur.com/GkFjdyZ.png)
-![This is an image](https://i.imgur.com/tAxvFBR.png)
-![This is an image](https://i.imgur.com/86e00Px.png)
-![This is an image](https://i.imgur.com/XL3X51X.png)
-## UPDATED: Services\Applicants.Api\Startup.cs
-```C#
-            string rabbitmqHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST");              // ALAA added this 
-            string rabbitmqUsername = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME");         // ALAA added this 
-            string rabbitmqPassword = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD");          // ALAA added this 
-
-```
-```C#
-                         var host = cfg.Host(new Uri($"rabbitmq://{rabbitmqHost}/"), h =>    // ALAA added this 
-                        {
-                            h.Username(rabbitmqUsername); // ALAA added this 
-                            h.Password(rabbitmqPassword);   // ALAA added this 
-                        });
-```
-## UPDATED: Services\Identity.Api\Startup.cs
-```C#
-            string rabbitmqHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST");              // ALAA added this 
-            string rabbitmqUsername = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME");         // ALAA added this 
-            string rabbitmqPassword = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD");          // ALAA added this 
-
-```
-```C#
-                         var host = cfg.Host(new Uri($"rabbitmq://{rabbitmqHost}/"), h =>    // ALAA added this 
-                        {
-                            h.Username(rabbitmqUsername); // ALAA added this 
-                            h.Password(rabbitmqPassword);   // ALAA added this 
-                        });
-```
-## UPDATED: Services\Jobs.Api\Startup.cs
-```C#
-            string rabbitmqHost = Environment.GetEnvironmentVariable("RABBITMQ_HOST");              // ALAA added this 
-            string rabbitmqUsername = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME");         // ALAA added this 
-            string rabbitmqPassword = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD");          // ALAA added this 
-```
-```C#
-                        sbc.Host(rabbitmqHost, "/", h =>
-                        {
-                            h.Username(rabbitmqUsername);
-                            h.Password(rabbitmqPassword);
-                        });  
-```
-## UPDATED: Dockerfile.applicantsapi
-```Dockerfile
-# Base image
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-stretch-slim as base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-# Build image
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-
-WORKDIR /src
-COPY ./Services/Applicants.Api /src/Services/Applicants.Api
-COPY ./Foundation/Events /src/Foundation/Events
-
-WORKDIR /src
-RUN dotnet restore /src/Services/Applicants.Api/applicants.api.csproj
-COPY . .
-WORKDIR /src/Services/Applicants.Api
-RUN dotnet build "applicants.api.csproj" -c Release -o /app/build
-
-# Publish image
-FROM build as publish
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-RUN dotnet publish "applicants.api.csproj" -c Release -o /app/pub
-
-# Final image
-FROM base AS final
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-WORKDIR /app
-COPY --from=publish /app/pub .
-ENTRYPOINT ["dotnet", "applicants.api.dll"]
-  
-```
-## UPDATED: Dockerfile.identityapi
-```Dockerfile
-# Base image
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-stretch-slim as base
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-# Build image
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-
-WORKDIR /src
-COPY ./Services/Identity.Api /src/Services/Identity.Api
-COPY ./Foundation/Events /src/Foundation/Events
-
-WORKDIR /src
-RUN dotnet restore /src/Services/Identity.Api/Identity.Api.csproj
-COPY . .
-WORKDIR /src/Services/Identity.Api
-RUN dotnet build "Identity.Api.csproj" -c Release -o /app/build
-
-# Publish image
-FROM build AS publish
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-RUN dotnet publish "Identity.Api.csproj" -c Release -o /app/pub
-
-# Final image
-FROM base AS final
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-WORKDIR /app
-COPY --from=publish /app/pub .
-ENTRYPOINT ["dotnet", "Identity.Api.dll"]  
-```
-## UPDATED: Dockerfile.jobsapi
-```Dockerfile
-# Base image
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-stretch-slim as base
-RUN mkdir app
-EXPOSE 80
-EXPOSE 443
-
-# Build image
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-RUN mkdir src
-WORKDIR /src
-COPY ./Services/Jobs.Api /src/Services/Jobs.Api
-COPY ./Foundation/Events /src/Foundation/Events
-
-WORKDIR /src
-RUN dotnet restore /src/Services/Jobs.Api/jobs.api.csproj
-COPY . .
-WORKDIR /src/Services/Jobs.Api
-RUN dotnet build "jobs.api.csproj" -c Release -o /app/build
-
-# Publish image
-FROM build as publish
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-RUN dotnet publish "jobs.api.csproj" -c Release -o /app/pub
-
-# Final image
-FROM base as final
-ENV RABBITMQ_HOST $RABBITMQ_HOST
-ENV RABBITMQ_USERNAME $RABBITMQ_USERNAME
-ENV RABBITMQ_PASSWORDE $RABBITMQ_PASSWORD
-WORKDIR /app
-COPY --from=publish /app/pub .
-ENTRYPOINT ["dotnet", "jobs.api.dll"]  
-```
-## UPDATED: Dockerfile.web
-```Dockerfile
-# Base image
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.1-stretch-slim as base
-WORKDIR /app 
-EXPOSE 80
-EXPOSE 443
-
-# Build image
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1-stretch as build
-WORKDIR /src
-COPY ./Web /src/Web
-COPY ./Foundation/Http /src/Foundation/Http
-
-
-WORKDIR /src/Web
-ENV SERVICE_API_IDENTITY $SERVICE_API_IDENTITY
-ENV SERVICE_API_JOBS $SERVICE_API_JOBS
-RUN apt-get update && apt-get install -y jq
-RUN jq --arg env "$SERVICE_API_IDENTITY" '.ApiSettings.IdentityApiUrl = $env' ./appsettings.json > ./appsettings.tmp && mv ./appsettings.tmp ./appsettings.json && \
-    jq --arg env "$SERVICE_API_JOBS" '.ApiSettings.JobsApiUrl = $env' ./appsettings.json > ./appsettings.tmp && mv ./appsettings.tmp ./appsettings.json
-
-WORKDIR /src
-RUN dotnet restore /src/Web/Web.csproj
-COPY . .
-WORKDIR /src/Web
-RUN dotnet build "Web.csproj" -c Release -o /app/build
-
-# Publish image
-FROM build AS publish
-RUN dotnet publish "Web.csproj" -c Release -o /app/pub
-
-# Final image
-FROM base AS final
-WORKDIR /app/pub
-COPY --from=publish /app/pub .
-ENTRYPOINT ["dotnet", "Web.dll"]  
-```
-## UPDATED: docker-compose.yml
-```YAML
-version: '3.9'
-networks:
-  web:
-    name: web.networks
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.21.0.0/16 
-          gateway: 172.21.0.1
-  redis: 
-    name: user.data.networks
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.18.0.0/16
-          gateway: 172.18.0.1
-  rabbitmq: 
-    name: rabbitmq.networks
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.19.0.0/16 
-          gateway: 172.19.0.1 
-  database: 
-    name: database.networks
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16 
-          gateway: 172.20.0.1
-
-volumes:
-  mssql-linux-volume:
-    driver: local
-  user-data-volume:
-    driver: local
-  rabbitmq-volume:
-    driver: local  
-
-services:
-  mssql-linux: ### sql.data #3
-    container_name: mssql-linux
-    image: mssql-linux
-    build:
-      context: ./Database
-      dockerfile: Dockerfile
-    ports:
-      - "5433:1433"
-    restart: on-failure
-    networks:
-      - database
-      - rabbitmq
-      - redis
-    volumes:
-      - mssql-linux-volume:/var/opt/mssql/data
-
-  user-data: ### user.data  #1
-    container_name: user-data
-    image: redis  
-    ports:
-      - "6379:6379"               # Exposition du port 6379.
-    restart: on-failure
-    networks:
-      - redis
-    volumes:
-      - user-data-volume:/data
-
-  rabbitmq: ### rabbitmq #2
-    container_name: rabbitmq
-    image: rabbitmq:3-management
-    ports:
-      - "15672:15672"             # il expose les ports 15672 et 5672.
-      - "5672:5672"               # On peux fermer le port 5672
-    healthcheck:
-        test: ["CMD", "rabbitmq-diagnostics", "status"]
-        interval: 10s
-        timeout: 5s
-        retries: 3
-    restart: on-failure
-    networks:
-      - rabbitmq
-    volumes:
-      - rabbitmq-volume:/_data
-      - rabbitmq-volume:/var/lib/rabbitmq
-
-  service-api-applicants: ### applicants.api #4
-    container_name: service-api-applicants
-    image: service-api-applicants
-    build:
-      context: .
-      dockerfile: Dockerfile.applicantsapi
-    environment:
-      - ConnectionString=Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.applicants
-      - HostRabbitmq=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
-    depends_on:
-      rabbitmq:
-          condition: service_healthy
-    restart: on-failure
-    networks:
-      - rabbitmq
-      - web  
-
-  service-api-jobs: ### jobs.api #5
-    container_name: service-api-jobs
-    image: service-api-jobs
-    build:
-      context: .
-      dockerfile: Dockerfile.jobsapi      
-    environment:
-      - ConnectionString=Server=mssql-linux;User=sa;Password=Pass@word;Database=dotnetgigs.jobs
-      - HostRabbitmq=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
-    depends_on:
-      rabbitmq:
-          condition: service_healthy
-    restart: on-failure
-    networks:
-      - rabbitmq
-      - web  
-
-  service-api-identity: ### identity.api  #6
-    container_name: service-api-identity
-    image: service-api-identity
-    build:
-      context: .
-      dockerfile: Dockerfile.identityapi
-    environment:
-      - RedisHost=user-data:6379
-      - HostRabbitmq=rabbitmq
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
-    depends_on:
-      rabbitmq:
-          condition: service_healthy
-    restart: on-failure
-    networks:
-      - rabbitmq
-      - redis
-      - web   
-          
-  web: ### web #7
-    container_name: web
-    image: web
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      SERVICE_API_IDENTITY: http://service-api-identity
-      SERVICE_API_JOBS: http://service-api-jobs
-    ports: 
-      - "80:80"
-    depends_on:
-      - service-api-identity
-      - service-api-jobs
-      - service-api-applicants
-    restart: on-failure
-    networks:
-      - web      
-```
-## UPDATED: dep-api.yaml
-```YAML
---- # service-api-jobs 
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-jobs      
-spec:
-  selector:
-    app: api
-    container: api-jobs
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-  type: NodePort
---- #service-api-identity
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-identity
-spec:
-  selector:
-    app: api
-    container: api-identity
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-  type: NodePort
---- # service-applicants-api
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-applicants-api
-spec:
-  selector:
-    app: api
-    container: applicants-api
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-  type: NodePort
---- # api-jobs-dep  
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-jobs-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api
-      container: api-jobs
-  template:
-    metadata:
-      labels:
-        app: api
-        container: api-jobs
-    spec:
-      containers:
-        - name: api-jobs
-          image: alaahajri/service-api-jobs:latest
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "500m"
-              memory: "1Gi"  
+## Intagration de secret rabbit mq pour cacher le mot de pass: 
+```YAML : Deployment YAML Rabbitmq
           env:
             - name: ConnectionString
-              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
+              value: "Server=service-mssql-linux.web;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
             - name: RABBITMQ_HOST
-              value: rabbitmq-service.default
+              value: rabbitmq-service.web
             - name: RABBITMQ_USERNAME
-              value: guest
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_USER
             - name: RABBITMQ_PASSWORD
-              value: guest     
-          # livenessProbe: 
-          #   httpGet:
-          #     path: /
-          #     port: 80
-          #   periodSeconds: 10 
-          #   initialDelaySeconds: 5                    
---- #api-identity-dep          
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-identity-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api
-      container: api-identity
-  template:
-    metadata:
-      labels:
-        app: api
-        container: api-identity
-    spec:
-      containers:
-        - name: api-identity
-          image: alaahajri/service-api-identity:latest
-          env:
-            - name: RedisHost
-              value: "service-redis.default:6379"
-            - name: RABBITMQ_HOST
-              value: rabbitmq-service.default
-            - name: RABBITMQ_USERNAME
-              value: guest
-            - name: RABBITMQ_PASSWORD
-              value: guest
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "500m"
-              memory: "1Gi"              
-          # livenessProbe: 
-          #   httpGet:
-          #     path: /
-          #     port: 80
-          #   periodSeconds: 10 
-          #   initialDelaySeconds: 5                         
---- # api-applicants-dep
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-applicants-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: api
-      container: api-applicants
-  template:
-    metadata:
-      labels:
-        app: api
-        container: api-applicants
-    spec:
-      containers:
-        - name: api-applicants
-          image: alaahajri/service-api-applicants:latest
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "512Mi"
-            limits:
-              cpu: "500m"
-              memory: "1Gi"  
-          env:
-            - name: ConnectionString
-              value: "Server=mssql-service.default;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
-            - name: RABBITMQ_HOST
-              value: rabbitmq-service.default
-            - name: RABBITMQ_USERNAME
-              value: guest
-            - name: RABBITMQ_PASSWORD
-              value: guest
-          # livenessProbe: 
-          #   httpGet:
-          #     path: /
-          #     port: 80
-          #   periodSeconds: 10 
-          #   initialDelaySeconds: 5           
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: RABBITMQ_DEFAULT_PASS
 ```
-## UPDATED: dep-mssql.yaml
-```YAML
-# mssql-dep
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mssql-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mssql-linux
-  template:
-    metadata:
-      labels:
-        app: mssql-linux
-    spec:
-      containers:
-      - name: mssql-linux
-        image: alaahajri/mssql-linux
-        ports:
-        - containerPort: 1433
-        resources:
-          requests:
-            cpu: "1"
-            memory: "1Gi"
-          limits:
-            cpu: "1"
-            memory: "2Gi"            
-        volumeMounts:
-          - name: mssql-data
-            mountPath: /var/opt/mssql
-      volumes:
-        - name: mssql-data
-          persistentVolumeClaim:
-            claimName: mssql-data-claim
----
+``` YAML : Secret RabbitMQ 
 apiVersion: v1
-kind: PersistentVolume
+kind: Secret
 metadata:
-  name: mssql-data
-spec:
-  storageClassName: resizable-storage
-  capacity:
-    storage: 5Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: /mnt/data/mssql
---- 
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: mssql-data-claim
-spec:
-  storageClassName: resizable-storage
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi  
+  name: rabbitmq-secret
+  namespace: web
+type: Opaque
+data:
+  RABBITMQ_DEFAULT_USER: Z3Vlc3Q=
+  RABBITMQ_DEFAULT_PASS: Z3Vlc3Q=
 ```
-## UPDATED: dep-rabbitmq.yaml
-```YAML
---- # rabbitmq-service
-apiVersion: v1
-kind: Service
-metadata:
-  name: rabbitmq-service
-spec:
-  type: NodePort   
-  ports:  # The name field is required when a service has more than one port.
-  - port: 15672
-    targetPort: 15672
-    nodePort: 30000     # Added nodePort
-    protocol: TCP
-    name: management 
-  - name: amqp
-    port: 5672
-    targetPort: 5672
-    nodePort: 30001     # Added nodePort
-    protocol: TCP
-  selector:
-    app: rabbitmq
---- # rabbitmq-dep
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: rabbitmq-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: rabbitmq
-  template:
-    metadata:
-      labels:
-        app: rabbitmq
-    spec:
-      containers:
-      - name: rabbitmq
-        image: alaahajri/rabbitmq:3-management
-        ports:
-        - containerPort: 15672
-        - containerPort: 5672   
-        resources:
-          requests:
-            cpu: "1"
-            memory: "1Gi"
-          limits:
-            cpu: "1"
-            memory: "2Gi"
-        env:
-          - name: RABBITMQ_DEFAULT_USER
-            value: guest
-          - name: RABBITMQ_DEFAULT_PASS
-            value: guest  
-        readinessProbe: # probe to know when RMQ is ready to accept traffic
-          exec:
-            # This is just an example. There is no "one true health check" but rather
-            # several rabbitmq-diagnostics commands that can be combined to form increasingly comprehensive
-            # and intrusive health checks.
-            # Learn more at https://www.rabbitmq.com/monitoring.html#health-checks.
-            #
-            # Stage 1 check:
-            command: ["rabbitmq-diagnostics", "ping"]
-          initialDelaySeconds: 20
-          periodSeconds: 60
-          timeoutSeconds: 10                        
+_____________________________________________________________
+# Bilan de santé: Prometheus, alertmanger, Grafana, KubeStateMetricss
+## Source 
+https://github.com/prometheus-operator/kube-prometheus/tree/main/manifests/
+
+## Pour tester: 
+
+kubectl top pods -n web
+
+kubectl top nodes -n web
+
+## Installation : 
+``` SH
+cd '.\B- prometheus\'
+
+kubectl apply --server-side -f manifests/setup
+
+kubectl wait --for condition=Established --all CustomResourceDefinition --namespace=monitoring
+
+kubectl apply -f manifests/
 ```
-## UPDATED: dep-redis.yaml
-```YAML
-# service-redis
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-redis
-spec:
-  selector:
-    app: redis
-  ports:
-  - protocol: TCP
-    port: 6379
-    targetPort: 6379
-  type: NodePort
---- # redis-dep
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: redis
-  template:
-    metadata:
-      labels:
-        app: redis
-    spec:
-      containers:
-      - name: redis
-        image: alaahajri/redis:latest
-        ports:
-        - containerPort: 6379
-        resources:
-          limits:
-            cpu: "1"
-            memory: "1Gi"   
-```
-## UPDATED: dep-web.yaml
-```YAML
---- # web service
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-service
-spec:
-  type: NodePort
-  ports:
-  - port: 80
-    targetPort: 80
-    nodePort: 30080
-    protocol: TCP
-  selector:
-    app: web
---- # web-dep
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-dep
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: web
-  template:
-    metadata:
-      labels:
-        app: web
-    spec:
-      containers:
-      - name: web                   #web
-        image: alaahajri/web:latest
-        ports:
-        - containerPort: 80
-        resources:
-          limits:
-            cpu: "1"
-            memory: "1Gi" 
-        env:
-          - name: ASPNETCORE_ENVIRONMENT
-            value: "Development"
-          - name: SERVICE_API_IDENTITY
-            value:  http://service-api-identity.default
-          - name: SERVICE_API_JOBS
-            value: http://service-api-jobs.default  
-```
-______________________________________________________________
+## Fix pour dockerdesktop seulment pas pour AZURE:
+
+``` SH
+kubectl patch ds prometheus-prometheus-node-exporter -n web --type "json" -p '[{"op": "remove", "path" : "/spec/template/spec/containers/0/volumeMounts/2/mountPropagation"}]'
+```			
+## Password recovery through CLI or you can do also on LENS:			
+user/password = admin/admin
+
+kubectl get secret --namespace monitoring grafana -o yaml
+echo “password_value” | openssl base64 -d ; echo
+_____________________________________________________________
+# LOG : Elasticsearch, Filebeat, Kibana, logstash, metricbeat
+## Template officiel par defaut: 
+https://artifacthub.io/packages/helm/elastic/elasticsearch
+
+https://artifacthub.io/packages/helm/elastic/logstash
+
+https://artifacthub.io/packages/helm/elastic/filebeat
+
+https://artifacthub.io/packages/helm/elastic/kibana
+
+## Modification de la tempalte : 
+
+## Creation du namespace "logging"
+``` SH
+kubectl create ns logging 
+``` 
+## Modificationd des template: 
+Communication entre filebeat, logstash vers Elasticsearch
+Aussi l'integration de nginx à lintérieur de la conf Kibana 
+## Instalation des template: 
+``` SH
+helm install filebeat ./C-logs-v8.5.1-ingress/filebeat -n logging
+helm install logstash ./C-logs-v8.5.1-ingress/logstash -n logging
+helm install elasticsearch ./C-logs-v8.5.1-ingress/elasticsearch -n logging
+helm install kibana ./C-logs-v8.5.1-ingress/kibana -n logging
+helm install metricbeat ./C-logs-v8.5.1-ingress/metricbeat -n logging
+
+helm upgrade filebeat ./C-logs-v8.5.1-ingress/filebeat -n logging
+helm upgrade logstash ./C-logs-v8.5.1-ingress/logstash -n logging
+helm upgrade elasticsearch ./C-logs-v8.5.1-ingress/elasticsearch -n logging
+helm upgrade kibana ./C-logs-v8.5.1-ingress/kibana -n logging
+helm upgrade metricbeat ./C-logs-v8.5.1-ingress/metricbeat -n logging
+
+helm uninstall filebeat ./C-logs-v8.5.1-ingress/filebeat -n logging
+helm uninstall logstash ./C-logs-v8.5.1-ingress/logstash -n logging
+helm uninstall elasticsearch ./C-logs-v8.5.1-ingress/elasticsearch -n logging
+helm uninstall kibana ./C-logs-v8.5.1-ingress/kibana -n logging
+helm uninstall metricbeat ./C-logs-v8.5.1-ingress/metricbeat -n logging
+``` 
+## Kibana uninstall fix 
+``` SH
+kubectl delete configmap kibana-kibana-helm-scripts -n logging
+kubectl delete serviceaccount pre-install-kibana-kibana -n logging
+kubectl delete serviceaccount post-delete-kibana-kibana -n logging
+
+helm uninstall kibana ./C-logs-v8.5.1-ingress/kibana -n logging
+
+helm install kibana2 ./C-logs-v8.5.1-ingress/kibana -n logging
+``` 
+## Passwords:
+
+Username: elastic
+Password: 
+Linux
+``` SH
+kubectl get secrets --namespace=default elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d
+``` 
+powershell:
+``` SH
+kubectl get secrets --namespace=default elasticsearch-master-credentials -ojsonpath='{.data.password}' -o yaml
+
+echo dTg2c0lWNGRXUG5UdUFpdA== | openssl base64 -d ; echo
+``` 
+______________________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+
+
