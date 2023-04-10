@@ -28,8 +28,6 @@ helm uninstall elasticsearch ./C-logs-v8.5.1-ingress/elasticsearch -n logging
 helm uninstall kibana ./C-logs-v8.5.1-ingress/kibana -n logging
 helm uninstall metricbeat ./C-logs-v8.5.1-ingress/metricbeat -n logging
 
-
-
 # Kibana uninstall fix 
 kubectl delete configmap kibana-kibana-helm-scripts -n logging
 kubectl delete serviceaccount pre-install-kibana-kibana -n logging
