@@ -1,6 +1,4 @@
 ___________________________________________________________________________________________________________________________________
-NOM         PRENOM      RESPONSABILITES
-HAJRI       Alaa
                         Dockerfile-----: Web, 3 API, Ms-sql
                         Docker-Compose-: F-Dockerfiles\docker-compose.yml : 
                         K8S------------: PersistentVolumeClaim, PersistentVolume, Service, Deployment, Secrets (Rabbitmq & Mssql)
@@ -11,11 +9,8 @@ HAJRI       Alaa
                         HELM-----------: Template HELM pour Web 
                         Vault----------:
                         
-SOUAI       Ahmed
                         Nginx-ingress, SSL 
-SANSOUCI    Abel
                         Deployment 3 API: 
-BONDONGA    Yannis
                         Deployment RabbitMQ et Reddis, Volumes
 ___________________________________________________________________________________________________________________________________
 
